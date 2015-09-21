@@ -36,6 +36,6 @@
 *.sh
 .DS_Store
 
-bin/
-testbin/
-doc/
+firmware/bin/
+firmware/testbin/
+firmware/doc/
