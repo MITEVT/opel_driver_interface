@@ -1,4 +1,4 @@
-#include "chip.h"
+#include "board.h"
 
 // -------------------------------------------------------------
 // Macro Definitions
@@ -6,18 +6,12 @@
 #define CCAN_BAUD_RATE 500000 					// Desired CAN Baud Rate
 #define UART_BAUD_RATE 9600 					// Desired UART Baud Rate
 
-#define LED_PORT 0 								// Debug LED Port
-#define LED_PIN 7								// Debug LED Pin
-#define LED LED_PORT, LED_PIN					// Debug LED
-
 #define BUFFER_SIZE 8
 
 // -------------------------------------------------------------
 // Static Variable Declaration
 
-const uint32_t OscRateIn = 0; 					// No external oscillator
-
-static volatile uint32_t msTicks; 				// Running count of milliseconds since start
+extern volatile uint32_t msTicks;
 
 static CCAN_MSG_OBJ_T msg_obj; 					// Message Object data structure for manipulating CAN messages
 static RINGBUFF_T CAN_rx_buffer;				// Ring Buffer for storing received CAN messages
@@ -36,38 +30,6 @@ static uint8_t UART_rx_buffer[BUFFER_SIZE]; 	// UART received message buffer
 void _delay(uint32_t ms) {
 	uint32_t curTicks = msTicks;
 	while ((msTicks - curTicks) < ms);
-}
-
-/**
- * Fill the can_api_timing_cfg struct with the appropriate values for a given baud rate
- * 
- * @param baud_rate desired baudrate in hz
- * @param can_api_timing_cfg struct ot fill with data for CAN Driver
- */
-void baudrateCalculate(uint32_t baud_rate, uint32_t *can_api_timing_cfg)
-{
-	uint32_t pClk, div, quanta, segs, seg1, seg2, clk_per_bit, can_sjw;
-	Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_CAN);
-	pClk = Chip_Clock_GetMainClockRate();
-
-	clk_per_bit = pClk / baud_rate;
-
-	for (div = 0; div <= 15; div++) {
-		for (quanta = 1; quanta <= 32; quanta++) {
-			for (segs = 3; segs <= 17; segs++) {
-				if (clk_per_bit == (segs * quanta * (div + 1))) {
-					segs -= 3;
-					seg1 = segs / 2;
-					seg2 = segs - seg1;
-					can_sjw = seg1 > 3 ? 3 : seg1;
-					can_api_timing_cfg[0] = div;
-					can_api_timing_cfg[1] =
-						((quanta - 1) & 0x3F) | (can_sjw & 0x03) << 6 | (seg1 & 0x0F) << 8 | (seg2 & 0x07) << 12;
-					return;
-				}
-			}
-		}
-	}
 }
 
 // -------------------------------------------------------------
@@ -105,80 +67,36 @@ void CAN_error(uint32_t error_info) {}
 // -------------------------------------------------------------
 // Interrupt Service Routines
 
-/**
- * SysTick Timer Interrupt Handler. Counts milliseconds since start
- */
-void SysTick_Handler(void) {
-	msTicks++;
-}
-
-/**
- * CCAN Interrupt Handler. Calls the isr() API located in the CCAN ROM
- */
-void CAN_IRQHandler(void) {
-	LPC_CCAN_API->isr();
-}
-
 // -------------------------------------------------------------
 // Main Program Loop
 
 int main(void) {
 
-	// Update the value of SystemCoreClock to the clock speed in hz
-	SystemCoreClockUpdate();
-
-	// Initialize SysTick Timer to fire interrupt at 1kHz
-	if (SysTick_Config (SystemCoreClock / 1000)) {
+	//---------------
+	// Initialize SysTick Timer to generate millisecond count
+	if (Board_SysTick_Init()) {
 		// Unrecoverable Error. Hang.
 		while(1);
 	}
 
 	//---------------
 	// Initialize GPIO and LED as output
-	Chip_GPIO_Init(LPC_GPIO);
-	Chip_GPIO_WriteDirBit(LPC_GPIO, LED, true);
+	Board_LEDs_Init();
 
 	//---------------
 	// Initialize UART Communication
-	Chip_IOCON_PinMuxSet(LPC_IOCON, IOCON_PIO1_6, (IOCON_FUNC1 | IOCON_MODE_INACT));	// Rx pin
-	Chip_IOCON_PinMuxSet(LPC_IOCON, IOCON_PIO1_7, (IOCON_FUNC1 | IOCON_MODE_INACT));	// Tx Pin
-
-	Chip_UART_Init(LPC_USART);
-	Chip_UART_SetBaud(LPC_USART, UART_BAUD_RATE);
-	Chip_UART_ConfigData(LPC_USART, (UART_LCR_WLEN8 | UART_LCR_SBS_1BIT | UART_LCR_PARITY_DIS));
-	Chip_UART_SetupFIFOS(LPC_USART, (UART_FCR_FIFO_EN | UART_FCR_TRG_LEV2));
-	Chip_UART_TXEnable(LPC_USART);
-
-	Chip_UART_SendBlocking(LPC_USART, "Started up\n\r", 12);
+	Board_UART_Init(UART_BAUD_RATE);
+	Board_UART_Println("Started up");
 
 	//---------------
-	// CAN Ring Buffer
+	// Initialize CAN  and CAN Ring Buffer
 
 	RingBuffer_Init(&CAN_rx_buffer, _rx_buffer, sizeof(CCAN_MSG_OBJ_T), BUFFER_SIZE);
 	RingBuffer_Flush(&CAN_rx_buffer);
 
-	//---------------
+	Board_CAN_Init(CCAN_BAUD_RATE, CAN_rx, CAN_tx, CAN_error);
 
-	uint32_t CanApiClkInitTable[2];
-	/* Publish CAN Callback Functions */
-	CCAN_CALLBACKS_T callbacks = {
-		CAN_rx,
-		CAN_tx,
-		CAN_error,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-	};
-	baudrateCalculate(CCAN_BAUD_RATE, CanApiClkInitTable);
-
-	LPC_CCAN_API->init_can(&CanApiClkInitTable[0], TRUE);
-	/* Configure the CAN callback functions */
-	LPC_CCAN_API->config_calb(&callbacks);
-	/* Enable the CAN Interrupt */
-	NVIC_EnableIRQ(CAN_IRQn);
-
+	// For your convenience.
 	// typedef struct CCAN_MSG_OBJ {
 	// 	uint32_t  mode_id;
 	// 	uint32_t  mask;
@@ -187,9 +105,7 @@ int main(void) {
 	// 	uint8_t   msgobj;
 	// } CCAN_MSG_OBJ_T;
 
-	/* Configure message object 1 to receive all 11-bit messages */
-
-	/* How do filters work?
+	/* [Tutorial] How do filters work?
 
 		Incoming ID & Mask == Mode_ID for msgobj to accept message
 
@@ -201,29 +117,34 @@ int main(void) {
 		mode_id == 0xa0c for msgobj to accept message
 
 	*/
+
+	/* Configure message object 1 to receive all 11-bit messages */
 	msg_obj.msgobj = 1;
 	msg_obj.mode_id = 0x000;
 	msg_obj.mask = 0x000;
 	LPC_CCAN_API->config_rxmsgobj(&msg_obj);
 
 	// Turn LED On
-	Chip_GPIO_SetPinState(LPC_GPIO, LED, true);
+	Chip_GPIO_SetPinState(LPC_GPIO, LED0, true);
 
 	while (1) {
 		uint8_t count;
-		if ((count = Chip_UART_Read(LPC_USART, UART_rx_buffer, BUFFER_SIZE)) != 0) {
-			Chip_UART_SendBlocking(LPC_USART, UART_rx_buffer, count); // Echo user input
+		if ((count = Board_UART_Read(UART_rx_buffer, BUFFER_SIZE)) != 0) {
+			Board_UART_SendBlocking(UART_rx_buffer, count); // Echo user input
 			switch (UART_rx_buffer[0]) {
 				case 't': // Send a hello world
-					Chip_UART_SendBlocking(LPC_USART, "\r\nHello World\r\n", 15); 
+					Board_UART_Println("\r\nHello World"); 
 					break;
 				case 's': // Transmit a message
-					msg_obj.msgobj = 2;
+					msg_obj.msgobj = 32;
 					msg_obj.mode_id = 0x600;
 					msg_obj.dlc = 1;
 					msg_obj.data[0] = 0xFF;
 
-					LPC_CCAN_API->can_transmit(&msg_obj);
+					if (LPC_CCAN->CANTXREQ2 & 0x0080 == 0)
+						LPC_CCAN_API->can_transmit(&msg_obj);
+					else 
+						Board_UART_Println("Still waiting on previous to send");
 					break;
 			}
 		}
@@ -231,7 +152,33 @@ int main(void) {
 		if (!RingBuffer_IsEmpty(&CAN_rx_buffer)) {
 			CCAN_MSG_OBJ_T temp_msg;
 			RingBuffer_Pop(&CAN_rx_buffer, &temp_msg);
-			Chip_UART_SendBlocking(LPC_USART, "Received Message\r\n", 18);
+			Board_UART_Println("Received Message");
 		}	
+
+		/* [Tutorial] How do I send a CAN Message?
+
+		There are 32 Message Objects in the CAN Peripherals Message RAM.
+		We need to pick one that isn't setup for receiving messages and use it to send.
+
+		For this exmaple we'll pick 31
+
+		msg_obj.msgobj = 31;
+		msg_obj.mode_id = 0x600; 		// CAN ID of Message to Send
+		msg_obj.dlc = 8; 				// Byte length of CAN Message
+		msg_obj.data[0] = 0xAA; 		// Fill your bytes here
+		msg_obj.data[1] = ..;
+		..
+		msg_obj.data[7] = 0xBB:
+
+		Now its time to send. But wait, what if that last request hasn't sent yet?
+		Let's check if the message object has been sent. We have to access either CANTXREQ1 or CANTXREQ2
+			depending on whether our message object is in the set of the 1st 16 or last 16
+			the first 16 bits correspond to the state of the tx request for each message object
+
+		if (LPC_CCAN->CANTXREQ2 & 0x0080 == 0) {
+			LPC_CCAN_API->can_transmit(&msg_obj);
+		}
+
+		*/
 	}
 }
