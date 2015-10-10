@@ -59,6 +59,7 @@ void CAN_rx(uint8_t msg_obj_num) {
  * @param msg_obj_num the msg_obj number that transmitted a message
  */
 void CAN_tx(uint8_t msg_obj_num) {
+	msg_obj_num = 0;
 }
 
 /**
