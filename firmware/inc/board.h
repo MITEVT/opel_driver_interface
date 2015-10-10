@@ -2,6 +2,7 @@
 #define __BOARD_H_
 
 #include "chip.h"
+#include "util.h"
 #include <string.h>
 
 // -------------------------------------------------------------
@@ -11,10 +12,15 @@ extern const uint32_t OscRateIn;
 volatile uint32_t msTicks; 						// Running count of milliseconds since start
 
 // -------------------------------------------------------------
+// Configuration Macros
+
+#define CAN_LOOP_BACK
+
+// -------------------------------------------------------------
 // Pin Descriptions
 
-#define LED0_PORT 0
-#define LED0_PIN 7
+#define LED0_PORT 2
+#define LED0_PIN 10
 
 #define LED1_PORT 0
 #define LED1_PIN 6
@@ -26,7 +32,6 @@ volatile uint32_t msTicks; 						// Running count of milliseconds since start
 #define UART_TX_PORT 1
 #define UART_TX_PIN 7
 #define UART_TX_IOCON IOCON_PIO1_7
-
 
 // -------------------------------------------------------------
 // Computed Macros
@@ -63,6 +68,15 @@ void Board_UART_Print(const char *str);
  *			FIFO. This function will block until the last bytes are in the FIFO.
  */
 void Board_UART_Println(const char *str);
+
+/**
+ * Transmit a string containing a number through the UART peripheral (blocking)
+ * 
+ * @param num number to print
+ * @param base number base
+ * @param crlf append carraige return and line feed
+ */
+void Board_UART_PrintNum(const int num, uint8_t base, bool crlf);
 
 /**
  * Transmit a byte array through the UART peripheral (blocking)

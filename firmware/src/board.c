@@ -58,6 +58,13 @@ void Board_UART_Println(const char *str) {
 	Board_UART_Print("\r\n");
 }
 
+void Board_UART_PrintNum(const int num, uint8_t base, bool crlf) {
+	static char str[32];
+	itoa(num, str, base);
+	Board_UART_Print(str);
+	if (crlf) Board_UART_Print("\r\n");
+}
+
 void Board_UART_SendBlocking(const void *data, uint8_t num_bytes) {
 	Chip_UART_SendBlocking(LPC_USART, data, num_bytes);
 }
@@ -104,9 +111,16 @@ void Board_CAN_Init(uint32_t baudrate, void (*rx_callback)(uint8_t), void (*tx_c
 		}
 	}
 
+	/* Initialize the CAN controller */
 	LPC_CCAN_API->init_can(&can_api_timing_cfg[0], TRUE);
 	/* Configure the CAN callback functions */
 	LPC_CCAN_API->config_calb(&callbacks);
+
+#ifdef CAN_LOOP_BACK
+	LPC_CCAN->CANCTRL |= (1 << 7); //Enable TEST Register
+	LPC_CCAN->CANTEST |= (1 << 3) | (1 << 4); // BASIC, SILENT, LOOPBACK
+#endif
+
 	/* Enable the CAN Interrupt */
 	NVIC_EnableIRQ(CAN_IRQn);
 }
