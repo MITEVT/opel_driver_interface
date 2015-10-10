@@ -142,8 +142,8 @@ int main(void) {
 					Board_UART_Println("\r\nHello World"); 
 					break;
 				case 's': // Transmit a message
-					msg_obj.msgobj = 2;
-					msg_obj.mode_id = 0x001;
+					msg_obj.msgobj = 31;
+					msg_obj.mode_id = 0x600;
 					msg_obj.dlc = 1;
 					msg_obj.data[0] = 0xFF;
 
@@ -160,31 +160,27 @@ int main(void) {
 			Board_UART_Println("Received Message");
 		}	
 
-	// 	/* [Tutorial] How do I send a CAN Message?
+		/* [Tutorial] How do I send a CAN Message?
 
-	// 	There are 32 Message Objects in the CAN Peripherals Message RAM.
-	// 	We need to pick one that isn't setup for receiving messages and use it to send.
+		There are 32 Message Objects in the CAN Peripherals Message RAM.
+		We need to pick one that isn't setup for receiving messages and use it to send.
 
-	// 	For this exmaple we'll pick 31
+		For this exmaple we'll pick 31
 
-	// 	msg_obj.msgobj = 31;
-	// 	msg_obj.mode_id = 0x600; 		// CAN ID of Message to Send
-	// 	msg_obj.dlc = 8; 				// Byte length of CAN Message
-	// 	msg_obj.data[0] = 0xAA; 		// Fill your bytes here
-	// 	msg_obj.data[1] = ..;
-	// 	..
-	// 	msg_obj.data[7] = 0xBB:
+		msg_obj.msgobj = 31;
+		msg_obj.mode_id = 0x600; 		// CAN ID of Message to Send
+		msg_obj.dlc = 8; 				// Byte length of CAN Message
+		msg_obj.data[0] = 0xAA; 		// Fill your bytes here
+		msg_obj.data[1] = ..;
+		..
+		msg_obj.data[7] = 0xBB:
 
-	// 	Now its time to send. But wait, what if that last request hasn't sent yet?
-	// 	Let's check if the message object has been sent. We have to access either CANTXREQ1 or CANTXREQ2
-	// 		depending on whether our message object is in the set of the 1st 16 or last 16
-	// 		the first 16 bits correspond to the state of the tx request for each message object
+		Now its time to send. But wait, what if that last request hasn't sent yet?
+		Let's check if the message object has been sent. We have to access either CANTXREQ1 or CANTXREQ2
+			depending on whether our message object is in the set of the 1st 16 or last 16
+			the first 16 bits correspond to the state of the tx request for each message object
 
-	// 	if (LPC_CCAN->CANTXREQ2 & 0x0080 == 0) {
-	// 		LPC_CCAN_API->can_transmit(&msg_obj);
-	// 	}
-
-	// 	*/
+		*/
 
 		if (CAN_error_flag) {
 			Board_UART_Print("CAN Error. Info: ");
