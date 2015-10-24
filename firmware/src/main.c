@@ -18,10 +18,10 @@ static RINGBUFF_T CAN_rx_buffer;				// Ring Buffer for storing received CAN mess
 static CCAN_MSG_OBJ_T _rx_buffer[BUFFER_SIZE]; 	// Underlying array used in ring buffer
 
 static char str[100];							// Used for composing UART messages
-static uint8_t UART_rx_buffer[BUFFER_SIZE]; 	// UART received message buffer
+static uint8_t uart_rx_buffer[BUFFER_SIZE]; 	// UART received message buffer
 
-static bool CAN_error_flag;
-static uint32_t CAN_error_info;
+static bool can_error_flag;
+static uint32_t can_error_info;
 
 // -------------------------------------------------------------
 // Helper Functions
@@ -43,7 +43,6 @@ void _delay(uint32_t ms) {
  * @param msg_obj_num the msg_obj number that received a message
  */
 void CAN_rx(uint8_t msg_obj_num) {
-	Board_UART_Println(":)");
 	/* Determine which CAN message has been received */
 	msg_obj.msgobj = msg_obj_num;
 	/* Now load up the msg_obj structure with the CAN message */
@@ -63,17 +62,18 @@ void CAN_tx(uint8_t msg_obj_num) {
 
 /**
  * CAN error callback executed by the Callback handler after
- * an error has occured on the CAN bus
+ * an error has occurred on the CAN bus
  * 
  * @param error_info Number describing CAN error
  */
 void CAN_error(uint32_t error_info) {
-	CAN_error_flag = true;
-	CAN_error_info = error_info;
+	can_error_flag = true;
+	can_error_info = error_info;
 }
 
 // -------------------------------------------------------------
 // Interrupt Service Routines
+
 
 // -------------------------------------------------------------
 // Main Program Loop
@@ -90,7 +90,7 @@ int main(void) {
 	//---------------
 	// Initialize GPIO and LED as output
 	Board_LEDs_Init();
-	Chip_GPIO_SetPinState(LPC_GPIO, LED0, true);
+	Board_LED_On(LED0);
 
 	//---------------
 	// Initialize UART Communication
@@ -133,11 +133,13 @@ int main(void) {
 	msg_obj.mask = 0x000;
 	LPC_CCAN_API->config_rxmsgobj(&msg_obj);
 
+	can_error_flag = false;
+
 	while (1) {
 		uint8_t count;
-		if ((count = Board_UART_Read(UART_rx_buffer, BUFFER_SIZE)) != 0) {
-			Board_UART_SendBlocking(UART_rx_buffer, count); // Echo user input
-			switch (UART_rx_buffer[0]) {
+		if ((count = Board_UART_Read(uart_rx_buffer, BUFFER_SIZE)) != 0) {
+			Board_UART_SendBlocking(uart_rx_buffer, count); // Echo user input
+			switch (uart_rx_buffer[0]) {
 				case 't': // Send a hello world
 					Board_UART_Println("\r\nHello World"); 
 					break;
@@ -175,22 +177,16 @@ int main(void) {
 	// 	..
 	// 	msg_obj.data[7] = 0xBB:
 
-	// 	Now its time to send. But wait, what if that last request hasn't sent yet?
-	// 	Let's check if the message object has been sent. We have to access either CANTXREQ1 or CANTXREQ2
-	// 		depending on whether our message object is in the set of the 1st 16 or last 16
-	// 		the first 16 bits correspond to the state of the tx request for each message object
-
-	// 	if (LPC_CCAN->CANTXREQ2 & 0x0080 == 0) {
-	// 		LPC_CCAN_API->can_transmit(&msg_obj);
-	// 	}
+	// 	Now its time to send
+	// 	LPC_CCAN_API->can_transmit(&msg_obj);
 
 	// 	*/
 
-		if (CAN_error_flag) {
+		if (can_error_flag) {
 			Board_UART_Print("CAN Error. Info: ");
-			CAN_error_flag = false;
+			can_error_flag = false;
 
-			itoa(CAN_error_info, str, 2);
+			itoa(can_error_info, str, 2);
 			Board_UART_Println(str);
 		}
 	}
