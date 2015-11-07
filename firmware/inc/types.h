@@ -6,41 +6,41 @@
  */
 
 typedef enum {
-	ERROR_NONE = 0, //No Error
+    ERROR_NONE = 0, //No Error
 
-	ERROR_CAN_BUS = 1, //Can bus error
-	ERROR_HEADLIGHTS = 2, //Headlights error
-	ERROR_BRAKELIGHTS = 3, //Brakelights error
+    ERROR_CAN_BUS = 1, //Can bus error
+    ERROR_HEADLIGHTS = 2, //Headlights error
+    ERROR_BRAKELIGHTS = 3, //Brakelights error
 
     // From which state did we reach the error state?
-	ERROR_CHARGE = 4 //Charge Failure
-	ERROR_DRIVE = 5 //Drive Failure
-	ERROR_ACCESSORIES = 6 //Accessories Failure
-	ERROR_SHUTDOWN_FAILURE = 7 //Shutdown Failure
-	ERROR_INIT = 8, //Initialization Failure
+    ERROR_CHARGE = 4 //Charge Failure
+    ERROR_DRIVE = 5 //Drive Failure
+    ERROR_ACCESSORIES = 6 //Accessories Failure
+    ERROR_SHUTDOWN_FAILURE = 7 //Shutdown Failure
+    ERROR_INIT = 8, //Initialization Failure
 } ERROR_T;
 
 /*
  * Enum of Key Modes
  */
 typedef enum {
-	OFF = 0, //Off Mode
-	ACCESSORIES = 1, //Standby Mode 
-	CHARGE = 2, //Charge Mode
-	DRIVE = 3 //Drive Mode
+    OFF = 0, //Off Mode
+    ACCESSORIES = 1, //Standby Mode 
+    CHARGE = 2, //Charge Mode
+    DRIVE = 3 //Drive Mode
 } KEYMODES_T;
 
 /*
  * Enum of DSM Modes
  */
 typedef enum {
-	OFF = 0, //Off Mode
-	ACCESSORIES = 1, //Standby Mode
-	CHARGE = 2, //Charge Mode
-	DRIVE = 3, //Drive Mode
-	INIT = 4, //Initialization Mode
-	SHUTDOWN = 5, //Normal Shutdown
-	FAIL = 6 //Error Mode
+    OFF = 0, //Off Mode
+    ACCESSORIES = 1, //Standby Mode
+    CHARGE = 2, //Charge Mode
+    DRIVE = 3, //Drive Mode
+    INIT = 4, //Initialization Mode
+    SHUTDOWN = 5, //Normal Shutdown
+    FAIL = 6 //Error Mode
 } MODES_T;
 
 typedef struct {
@@ -57,13 +57,13 @@ typedef struct {
  */
 
 typedef enum {
-	REQ_OFF = 0, //Request to OFF
-	REQ_ACCESSORIES = 1, //Request to Accessories
-	REQ_CHARGE = 2, //Request to Charge
-	REQ_DRIVE = 3, //Request to Drive
-	REQ_INIT = 4, //Request to Initialize
-	REQ_SHUTDOWN = 5, //Request to Shutdown
-	REQ_NONE = 6 //No request
+    REQ_OFF = 0, //Request to OFF
+    REQ_ACCESSORIES = 1, //Request to Accessories
+    REQ_CHARGE = 2, //Request to Charge
+    REQ_DRIVE = 3, //Request to Drive
+    REQ_INIT = 4, //Request to Initialize
+    REQ_SHUTDOWN = 5, //Request to Shutdown
+    REQ_NONE = 6 //No request
 } MODE_REQUEST_T;
 
 typedef enum {
@@ -78,17 +78,17 @@ typedef enum {
 } TURN_BLINKER_T;
 
 typedef struct {
-	bool wipers_on; //State of the wipers
-	HEADLIGHT_STATE_T headlight_state; //State of the headlights
+    bool wipers_on; //State of the wipers
+    HEADLIGHT_STATE_T headlight_state; //State of the headlights
     TURN_BLINKER_T turn_blinker; //State of turn blinkers
-	bool brake_lights_on; //State of brake lights
+    bool brake_lights_on; //State of brake lights
 } ACCESSORIES_INPUT_STATE_T;
 
 typedef struct {
-	bool wipers_on; //State of da wipers
-	HEADLIGHT_STATE_T headlight_state; //State of the headlights
-   	TURN_BLINKER_T turn_blinker; //State of turn blinkers
-	bool brake_lights_on; //State of brake lights
+    bool wipers_on; //State of da wipers
+    HEADLIGHT_STATE_T headlight_state; //State of the headlights
+    TURN_BLINKER_T turn_blinker; //State of turn blinkers
+    bool brake_lights_on; //State of brake lights
 } ACCESSORIES_OUTPUT_REQUEST_T;
 
 typedef struct {
