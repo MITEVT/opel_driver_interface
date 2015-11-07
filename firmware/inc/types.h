@@ -43,6 +43,14 @@ typedef enum {
 	FAIL = 6 //Error Mode
 } MODES_T;
 
+typedef struct {
+    MODES_T DSM_modes;
+    uint64_t time_since_BMS_heartbeat;
+    uint64_t time_since_throttle_heartbeat;
+    uint64_t time_since_PDM_heartbeat;
+    uint64_t time_since_velocity_heartbeat;
+    uint16_t velocity;
+} STATE_T;
 
 /*
  * Enum of DSM Mode requests
@@ -76,30 +84,39 @@ typedef struct {
 	bool brake_lights_on; //State of brake lights
 } ACCESSORIES_INPUT_STATE_T;
 
-
 typedef struct {
 	bool wipers_on; //State of the wipers
 	HEADLIGHT_STATE_T headlight_state; //State of the headlights
-    TURN_BLINKER_T turn_blinker; //State of turn blinkers
+   	TURN_BLINKER_T turn_blinker; //State of turn blinkers
 	bool brake_lights_on; //State of brake lights
 } ACCESSORIES_OUTPUT_REQUEST_T;
 
 typedef struct {
-    bool recieved_message;
+    bool BMS_heartbeat;
+    bool kill_switch;
+    bool PDM_heartbeat;
+    bool throttle_heartbeat;
     uint16_t velocity;
-} VELOCITY_MESSAGE_T;
+    bool init_test;
+} INPUT_MESSAGES;
 
 typedef struct {
-    bool recieved_message;
-    bool init_tests_pass;
-} INIT_TEST_MESSAGE_T;
+    bool req_to_test;
+    bool req_to_send_heartbeat;
+    bool req_to_shutdown;
+} OUTPUT_MESSAGE;
 
 typedef struct {
-    ACCESSORY_OUTPUT_REQUEST_T acc_request;
+    ACCESSORIES_INPUT_STATE_T acc_input;
     KEYMODES_T keymodes;
-    VELOCITY_MESSAGE_T velocity;
-    INIT_TEST_MESSAGE_T init_test;
+    INPUT_MESSAGES input_message;
 } INPUT_T;
+
+typedef struct {
+    ACCESSORIES_OUTPUT_REQUEST_T acc_output;
+    bool close_contactors;
+    OUTPUT_MESSAGE output_message;
+} OUTPUT_T;
 
 /*
  * @details Step the Driver State Machine. Call as often as possible to
@@ -107,13 +124,13 @@ typedef struct {
  *
  */
 
-ERROR_T DSM_Step(INPUT_T, ACCESSORY_REQUEST_T, TOGGLE_STATE_T, MODES_T, KEYMODES_T);
+ERROR_T DSM_Step(INPUT_T, STATE_T, OUTPUT_T);
 
 /*
  * @details Obtain the current Driver State Machine Mode
  * @return the current DSM Mode
  */
 
-MODES_T DSM_GetMode(void);
+STATE_T DSM_GetState(void);
 
 #endif
