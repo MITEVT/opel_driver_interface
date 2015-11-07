@@ -85,7 +85,7 @@ typedef struct {
 } ACCESSORIES_INPUT_STATE_T;
 
 typedef struct {
-	bool wipers_on; //State of the wipers
+	bool wipers_on; //State of da wipers
 	HEADLIGHT_STATE_T headlight_state; //State of the headlights
    	TURN_BLINKER_T turn_blinker; //State of turn blinkers
 	bool brake_lights_on; //State of brake lights
