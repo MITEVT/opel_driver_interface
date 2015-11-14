@@ -66,22 +66,33 @@ typedef enum {
     REQ_NONE = 6 //No request
 } MODE_REQUEST_T;
 
+
 typedef enum {
     HEADLIGHT_OFF = 0;
     HEADLIGHT_ON = 1;
     HIGHBEAM_ON = 2;
 } HEADLIGHT_STATE_T;
 
+typedef struct{
+    uint8_t switch1;
+    uint8_t switch2;
+}HEADLIGHT_SWITCH_STATE;
+
 typedef enum {
     BLINKER_OFF = 0;
     LEFT_BLINKER = 1;
-    RdIGHT_BLINKER = 2;
+    RIGHT_BLINKER = 2;
 } TURN_BLINKER_T;
+
+typedef struct{
+    uint8_t switch1;
+    uint8_t switch2;
+}BLINKER_SWITCH_STATE;
 
 typedef struct {
     bool wipers_on; //State of the wipers
-    HEADLIGHT_STATE_T headlight_state; //State of the headlights
-    TURN_BLINKER_T turn_blinker; //State of turn blinkers
+    HEADLIGHT_SWITCH_STATE *headlights; //State of headlights
+    BLINKER_SWITCH_STATE *turn_blinker; //State of turn blinkers
     bool brake_lights_on; //State of brake lights
 } ACCESSORIES_INPUT_STATE_T;
 
@@ -108,15 +119,15 @@ typedef struct {
 } OUTPUT_MESSAGE;
 
 typedef struct {
-    ACCESSORIES_INPUT_STATE_T acc_input;
-    KEYMODES_T keymodes;
-    INPUT_MESSAGES input_message;
+    ACCESSORIES_INPUT_STATE_T *acc_input;
+    KEYMODES_T *keymodes;
+    INPUT_MESSAGES *input_message;
 } INPUT_T;
 
 typedef struct {
-    ACCESSORIES_OUTPUT_REQUEST_T acc_output;
+    ACCESSORIES_OUTPUT_REQUEST_T *acc_output;
     bool close_contactors;
-    OUTPUT_MESSAGE output_message;
+    OUTPUT_MESSAGE *output_message;
 } OUTPUT_T;
 
 /*
