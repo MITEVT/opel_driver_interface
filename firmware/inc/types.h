@@ -76,7 +76,7 @@ typedef enum {
 typedef struct{
     bool switch1;
     bool switch2;
-}HEADLIGHT_SWITCH_STATE;
+HEADLIGHT_SWITCH_STATE;
 
 typedef enum {
     BLINKER_OFF = 0;
@@ -136,7 +136,10 @@ typedef struct {
  *
  */
 
-ERROR_T DSM_Step(INPUT_T, STATE_T, OUTPUT_T);
+ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output, MODE_REQUEST_T mode_request);
+
+ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output);
+
 
 /*
  * @details Obtain the current Driver State Machine Mode
