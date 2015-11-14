@@ -73,8 +73,9 @@ typedef enum {
 } HEADLIGHT_STATE_T;
 
 typedef enum {
-    LEFT_BLINKER = 0;
-    RIGHT_BLINKER = 1;
+    BLINKER_OFF = 0;
+    LEFT_BLINKER = 1;
+    RdIGHT_BLINKER = 2;
 } TURN_BLINKER_T;
 
 typedef struct {
