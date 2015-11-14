@@ -74,8 +74,8 @@ typedef enum {
 } HEADLIGHT_STATE_T;
 
 typedef struct{
-    uint8_t switch1;
-    uint8_t switch2;
+    bool switch1;
+    bool switch2;
 }HEADLIGHT_SWITCH_STATE;
 
 typedef enum {
@@ -85,14 +85,14 @@ typedef enum {
 } TURN_BLINKER_T;
 
 typedef struct{
-    uint8_t switch1;
-    uint8_t switch2;
+    bool switch1;
+    bool switch2;
 }BLINKER_SWITCH_STATE;
 
 typedef struct {
     bool wipers_on; //State of the wipers
-    HEADLIGHT_SWITCH_STATE *headlights; //State of headlights
-    BLINKER_SWITCH_STATE *turn_blinker; //State of turn blinkers
+    HEADLIGHT_SWITCH_STATE *headlight_switches; //State of headlights
+    BLINKER_SWITCH_STATE *turn_blinker_switches; //State of turn blinkers
     bool brake_lights_on; //State of brake lights
 } ACCESSORIES_INPUT_STATE_T;
 
