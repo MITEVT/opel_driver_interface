@@ -4,38 +4,10 @@
 #include "stdint.h"
 #include "stdbool.h"
 
-/*
- * Enum of Error types
- */
+/************************************************
+ *         TYPES DEFINING STATE                 *
+ ***********************************************/
 
-typedef enum {
-    ERROR_NONE = 0, //No Error
-
-    ERROR_CAN_BUS = 1, //Can bus error
-    ERROR_HEADLIGHTS = 2, //Headlights error
-    ERROR_BRAKELIGHTS = 3, //Brakelights error
-
-    // From which state did we reach the error state?
-    ERROR_CHARGE = 4, //Charge Failure
-    ERROR_DRIVE = 5, //Drive Failure
-    ERROR_ACCESSORIES = 6, //Accessories Failure
-    ERROR_SHUTDOWN_FAILURE = 7, //Shutdown Failure
-    ERROR_INIT = 8 //Initialization Failure
-} ERROR_T;
-
-/*
- * Enum of Key Modes
- */
-typedef enum {
-    KEYMODE_OFF = 0, //Off Mode
-    KEYMODE_ACCESSORIES = 1, //Standby Mode 
-    KEYMODE_CHARGE = 2, //Charge Mode
-    KEYMODE_DRIVE = 3 //Drive Mode
-} KEYMODES_T;
-
-/*
- * Enum of DSM Modes
- */
 typedef enum {
     MODE_OFF = 0, //Off Mode
     MODE_ACCESSORIES = 1, //Standby Mode
@@ -47,17 +19,22 @@ typedef enum {
 } MODES_T;
 
 typedef struct {
-    MODES_T DSM_modes;
     uint64_t time_since_BMS_heartbeat;
     uint64_t time_since_throttle_heartbeat;
     uint64_t time_since_PDM_heartbeat; //Power distribution module 
     uint64_t time_since_velocity_heartbeat;
     uint16_t velocity;
+} HEARTBEAT_DATA;
+
+typedef struct {
+    MODES_T DSM_modes;
+    HEARTBEAT_DATA *heartbeat_data;
 } STATE_T;
 
-/*
- * Enum of DSM Mode requests
- */
+
+/************************************************
+ *  PASSED INTO SUB-SMs BASED ON KEY STATE      *
+ ***********************************************/
 
 typedef enum {
     REQ_OFF = 0, //Request to OFF
@@ -68,6 +45,17 @@ typedef enum {
     REQ_SHUTDOWN = 5, //Request to Shutdown
     REQ_NONE = 6 //No request
 } MODE_REQUEST_T;
+
+/************************************************
+ *              THE INPUT TYPES               *
+ ***********************************************/
+
+typedef enum {
+    KEYMODE_OFF = 0, //Off Mode
+    KEYMODE_ACCESSORIES = 1, //Standby Mode 
+    KEYMODE_CHARGE = 2, //Charge Mode
+    KEYMODE_DRIVE = 3 //Drive Mode
+} KEYMODES_T;
 
 
 typedef enum {
@@ -90,13 +78,6 @@ typedef struct {
 } ACCESSORIES_INPUT_STATE_T;
 
 typedef struct {
-    bool wipers_on; //State of da wipers
-    HEADLIGHT_STATE_T headlight_state; //State of the headlights
-    TURN_BLINKER_T turn_blinker; //State of turn blinkers
-    bool brake_lights_on; //State of brake lights
-} ACCESSORIES_OUTPUT_REQUEST_T;
-
-typedef struct {
     bool BMS_heartbeat;
     bool kill_switch;
     bool PDM_heartbeat;
@@ -106,37 +87,57 @@ typedef struct {
 } INPUT_MESSAGES;
 
 typedef struct {
+    ACCESSORIES_INPUT_STATE_T *acc_input;
+    KEYMODES_T *keymodes;
+    INPUT_MESSAGES *messages;
+} INPUT_T;
+
+
+/************************************************
+ *              THE OUTPUT TYPES               *
+ ***********************************************/
+
+typedef struct {
+    bool wipers_on; //State of da wipers
+    HEADLIGHT_STATE_T headlight_state; //State of the headlights
+    TURN_BLINKER_T turn_blinker; //State of turn blinkers
+    bool brake_lights_on; //State of brake lights
+} ACCESSORIES_OUTPUT_REQUEST_T;
+
+typedef struct {
     bool req_to_test;
     bool req_to_send_heartbeat;
     bool req_to_shutdown;
-} OUTPUT_MESSAGE;
-
-typedef struct {
-    ACCESSORIES_INPUT_STATE_T *acc_input;
-    KEYMODES_T *keymodes;
-    INPUT_MESSAGES *input_message;
-} INPUT_T;
+} OUTPUT_MESSAGES;
 
 typedef struct {
     ACCESSORIES_OUTPUT_REQUEST_T *acc_output;
+    OUTPUT_MESSAGES *messages;
     bool close_contactors;
-    OUTPUT_MESSAGE *output_message;
 } OUTPUT_T;
 
-/*
- * @details Step the Driver State Machine. Call as often as possible to
- * keep the Driver State Machine up to date
- *
- */
+typedef enum {
+    ERROR_NONE = 0, //No Error
+
+    ERROR_CAN_BUS = 1, //Can bus error
+    ERROR_HEADLIGHTS = 2, //Headlights error
+    ERROR_BRAKELIGHTS = 3, //Brakelights error
+
+    // From which state did we reach the error state?
+    ERROR_CHARGE = 4, //Charge Failure
+    ERROR_DRIVE = 5, //Drive Failure
+    ERROR_ACCESSORIES = 6, //Accessories Failure
+    ERROR_SHUTDOWN_FAILURE = 7, //Shutdown Failure
+    ERROR_INIT = 8 //Initialization Failure
+} ERROR_T;
+
+/************************************************
+ *              STEP METHODS                   *
+ ***********************************************/
 
 ERROR_T DSM_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state);
 
 ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request);
-
-/*
- * @details Obtain the current Driver State Machine Mode
- * @return the current DSM Mode
- */
 
 STATE_T DSM_GetState(void);
 

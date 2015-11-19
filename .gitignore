@@ -39,3 +39,7 @@
 firmware/bin/
 firmware/testbin/
 firmware/doc/
+
+#Vim shit
+*.swp
+*.swo
