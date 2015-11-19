@@ -2,6 +2,9 @@
 #include "shutdown.h"
 #include "init.h"
 
+
+//MAKE SURE TO CHECK BMS HEARTBEAT
+
 MODES_T mode;
 
 void DSM_Init(void){
