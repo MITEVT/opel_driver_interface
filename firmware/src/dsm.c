@@ -49,7 +49,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 	}else if(input->keymodes == KEYMODE_ACCESSORIES){
 		if(mode != MODE_ACCESSORIES){
 			if(mode == MODE_OFF){
-				mode == MODE_INIT;
+				mode = MODE_INIT;
 				return ERROR_NONE;
 
 			}else if(mode == MODE_INIT){
@@ -75,8 +75,20 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 		}else{
 			return AccStep(input, output, state, REQ_NONE);
 		}
+	}else if(input->keymodes == KEYMODE_DRIVE){
+		if(mode != MODE_DRIVE){
+			if(mode == MODE_OFF){
+				mode = MODE_INIT;
+				return ERROR_NONE; 
+			}else if(mode == MODE_INIT){
+				if(Init_GetMode() == INIT_DONE){
+					mode = MODE_DRIVE;
+					return ERROR_NONE
+				}
+			}
+		}else{
+			return DriveStep(input, output, state, REQ_NONE);
+		}
 	}
 }
 
-
-}
