@@ -9,7 +9,7 @@
  ***********************************************/
 
 typedef enum {
-    MODE_OFF = 0, //Off Mode
+    MODE_OFF = 1, //Off Mode
     MODE_ACCESSORIES = 1, //Standby Mode
     MODE_CHARGE = 2, //Charge Mode
     MODE_DRIVE = 3, //Drive Mode
@@ -42,8 +42,7 @@ typedef enum {
     REQ_CHARGE = 2, //Request to Charge
     REQ_DRIVE = 3, //Request to Drive
     REQ_INIT = 4, //Request to Initialize
-    REQ_SHUTDOWN = 5, //Request to Shutdown
-    REQ_NONE = 6 //No request
+    REQ_SHUTDOWN = 5 //Request to Shutdown
 } MODE_REQUEST_T;
 
 /************************************************
@@ -79,7 +78,6 @@ typedef struct {
 
 typedef struct {
     bool BMS_heartbeat;
-    bool kill_switch;
     bool PDM_heartbeat;
     bool throttle_heartbeat;
     uint16_t velocity;

@@ -1,9 +1,17 @@
-#include <stdio.h>
+#include <stdio.h> 
 #include "types.h"
 
 ACCESSORIES_OUTPUT_REQUEST_T *convert_acc(ACCESSORIES_INPUT_STATE_T *acc_in) {
     return NULL;
 }
+
+ACCESSORIES_OUTPUT_REQUEST_T *turn_all_off() {
+    return NULL;
+}
+
+HEARTBEAT_DATA *reset_heartbeat_data() { 
+    return NULL; 
+} 
 
 HEARTBEAT_DATA *process_input_message(INPUT_MESSAGES *input_messages) {
     return NULL;
@@ -21,8 +29,9 @@ ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T
             // Process input: convert received heartbeat to update last received 
             HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
             //Update output
-            output->close_contactors = false;
+            output->close_contactors = true;
             output->acc_output = acc_out;
+            //TODO: should send heartbeat when not driving, but still want low power line?
             OUTPUT_MESSAGES out_messages = {.test = false, .command_shutdown = false, .send_heartbeat = false};
             output->messages = &out_messages;
 
@@ -51,13 +60,36 @@ ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T
         } case REQ_INIT:
             return ERROR_ILLEGAL_STATE_REQUEST;
 
-        case REQ_SHUTDOWN:
-            break;
+        case REQ_SHUTDOWN: {
+            ACCESSORIES_OUTPUT_REQUEST_T *acc_out = turn_all_off();
+            HEARTBEAT_DATA *heartbeat_data = reset_heartbeat_data();
 
-        case REQ_CHARGE:
-            break;
+            //Update output
+            output->close_contactors = false;
+            output->acc_output = acc_out;
+            OUTPUT_MESSAGES out_messages = {.test = false, .command_shutdown = true, .send_heartbeat = false};
+            output->messages = &out_messages;
 
-        case REQ_NONE:
+            //Update state
+            state->heartbeat_data = heartbeat_data;
+            state->DSM_modes = MODE_SHUTDOWN;
+	        return ERROR_NONE;
+
+        } case REQ_CHARGE:
+            // Process input: convert acc input requested to acc output request
+            ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
+            // Process input: convert received heartbeat to update last received 
+            HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
+
+            //Update output
+            output->close_contactors = true;
+            output->acc_output = acc_out;
+            OUTPUT_MESSAGES out_messages = {.test = false, .command_shutdown = false, .send_heartbeat = false};
+            output->messages = &out_messages;
+
+            //Update state
+            state->heartbeat_data = heartbeat_data;
+            state->DSM_modes = MODE_CHARGE;
 	        return ERROR_NONE;
     }
 	return ERROR_NONE;
