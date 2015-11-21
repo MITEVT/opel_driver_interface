@@ -1,6 +1,9 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
+#include "stdint.h"
+#include "stdbool.h"
+
 /*
  * Enum of Error types
  */
@@ -13,41 +16,41 @@ typedef enum {
     ERROR_BRAKELIGHTS = 3, //Brakelights error
 
     // From which state did we reach the error state?
-    ERROR_CHARGE = 4 //Charge Failure
-    ERROR_DRIVE = 5 //Drive Failure
-    ERROR_ACCESSORIES = 6 //Accessories Failure
-    ERROR_SHUTDOWN_FAILURE = 7 //Shutdown Failure
-    ERROR_INIT = 8, //Initialization Failure
+    ERROR_CHARGE = 4, //Charge Failure
+    ERROR_DRIVE = 5, //Drive Failure
+    ERROR_ACCESSORIES = 6, //Accessories Failure
+    ERROR_SHUTDOWN_FAILURE = 7, //Shutdown Failure
+    ERROR_INIT = 8 //Initialization Failure
 } ERROR_T;
 
 /*
  * Enum of Key Modes
  */
 typedef enum {
-    OFF = 0, //Off Mode
-    ACCESSORIES = 1, //Standby Mode 
-    CHARGE = 2, //Charge Mode
-    DRIVE = 3 //Drive Mode
+    KEYMODE_OFF = 0, //Off Mode
+    KEYMODE_ACCESSORIES = 1, //Standby Mode 
+    KEYMODE_CHARGE = 2, //Charge Mode
+    KEYMODE_DRIVE = 3 //Drive Mode
 } KEYMODES_T;
 
 /*
  * Enum of DSM Modes
  */
 typedef enum {
-    OFF = 0, //Off Mode
-    ACCESSORIES = 1, //Standby Mode
-    CHARGE = 2, //Charge Mode
-    DRIVE = 3, //Drive Mode
-    INIT = 4, //Initialization Mode
-    SHUTDOWN = 5, //Normal Shutdown
-    FAIL = 6 //Error Mode
+    MODE_OFF = 0, //Off Mode
+    MODE_ACCESSORIES = 1, //Standby Mode
+    MODE_CHARGE = 2, //Charge Mode
+    MODE_DRIVE = 3, //Drive Mode
+    MODE_MODE_INIT = 4, //Initialization Mode
+    MODE_SHUTDOWN = 5, //Normal Shutdown
+    MODE_FAIL = 6 //Error Mode
 } MODES_T;
 
 typedef struct {
     MODES_T DSM_modes;
     uint64_t time_since_BMS_heartbeat;
     uint64_t time_since_throttle_heartbeat;
-    uint64_t time_since_PDM_heartbeat;
+    uint64_t time_since_PDM_heartbeat; //Power distribution module 
     uint64_t time_since_velocity_heartbeat;
     uint16_t velocity;
 } STATE_T;
@@ -68,31 +71,21 @@ typedef enum {
 
 
 typedef enum {
-    HEADLIGHT_OFF = 0;
-    HEADLIGHT_ON = 1;
-    HIGHBEAM_ON = 2;
+    HEADLIGHT_OFF = 0,
+    HEADLIGHT_ON = 1,
+    HIGHBEAM_ON = 2
 } HEADLIGHT_STATE_T;
 
-typedef struct{
-    bool switch1;
-    bool switch2;
-HEADLIGHT_SWITCH_STATE;
-
 typedef enum {
-    BLINKER_OFF = 0;
-    LEFT_BLINKER = 1;
-    RIGHT_BLINKER = 2;
+    BLINKER_OFF = 0,
+    LEFT_BLINKER = 1,
+    RIGHT_BLINKER = 2
 } TURN_BLINKER_T;
-
-typedef struct{
-    bool switch1;
-    bool switch2;
-}BLINKER_SWITCH_STATE;
 
 typedef struct {
     bool wipers_on; //State of the wipers
-    HEADLIGHT_SWITCH_STATE *headlight_switches; //State of headlights
-    BLINKER_SWITCH_STATE *turn_blinker_switches; //State of turn blinkers
+    HEADLIGHT_STATE_T headlight_switches; //State of headlights
+    TURN_BLINKER_T turn_blinker_switches; //State of turn blinkers
     bool brake_lights_on; //State of brake lights
 } ACCESSORIES_INPUT_STATE_T;
 
