@@ -41,7 +41,7 @@ typedef enum {
     MODE_ACCESSORIES = 1, //Standby Mode
     MODE_CHARGE = 2, //Charge Mode
     MODE_DRIVE = 3, //Drive Mode
-    MODE_MODE_INIT = 4, //Initialization Mode
+    MODE_INIT = 4, //Initialization Mode
     MODE_SHUTDOWN = 5, //Normal Shutdown
     MODE_FAIL = 6 //Error Mode
 } MODES_T;
