@@ -1,7 +1,7 @@
 #include "types.h"
 
 ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request){
-	ACCESSORY_INPUT_STATE_T inp = input->acc_input;
+	ACCESSORIES_INPUT_STATE_T inp = input->acc_input;
 	ACCESSORY_OUTPUT_REQUEST_T out_req = output->acc_output;	
 
 	//headlights

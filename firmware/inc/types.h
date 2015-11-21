@@ -129,10 +129,9 @@ typedef struct {
  *
  */
 
-ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output, MODE_REQUEST_T mode_request);
+ERROR_T DSM_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state);
 
-ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output);
-
+ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request);
 
 /*
  * @details Obtain the current Driver State Machine Mode
