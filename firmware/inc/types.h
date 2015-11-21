@@ -105,9 +105,9 @@ typedef struct {
 } ACCESSORIES_OUTPUT_REQUEST_T;
 
 typedef struct {
-    bool req_to_test;
-    bool req_to_send_heartbeat;
-    bool req_to_shutdown;
+    bool test; // Request hardware to send test module message to init tests
+    bool send_heartbeat; // Request hardware to send heartbeat
+    bool command_shutdown; // Command a shutdown
 } OUTPUT_MESSAGES;
 
 typedef struct {
@@ -128,7 +128,9 @@ typedef enum {
     ERROR_DRIVE = 5, //Drive Failure
     ERROR_ACCESSORIES = 6, //Accessories Failure
     ERROR_SHUTDOWN_FAILURE = 7, //Shutdown Failure
-    ERROR_INIT = 8 //Initialization Failure
+    ERROR_INIT = 8, //Initialization Failure
+
+    ERROR_ILLEGAL_STATE_REQUEST = 9
 } ERROR_T;
 
 /************************************************
