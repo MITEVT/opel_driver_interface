@@ -2,6 +2,8 @@
 
 INIT_MODES_T init_mode;
 
+// TODO: keep init_done state (maybe ^?) and respond to both curr MODE_OFF -> other MODE and curr MODE_INIT -> other MODE
+
 INIT_Init(void){
 	init_mode = INIT_OFF;
 }

@@ -16,7 +16,7 @@ typedef enum {
     MODE_INIT = 4, //Initialization Mode
     MODE_SHUTDOWN = 5, //Normal Shutdown
     MODE_FAIL = 6 //Error Mode
-} MODES_T;
+} MODE_T;
 
 typedef struct {
     uint64_t time_since_BMS_heartbeat;
@@ -27,7 +27,7 @@ typedef struct {
 } HEARTBEAT_DATA;
 
 typedef struct {
-    MODES_T DSM_modes;
+    MODE_T dsm_mode;
     HEARTBEAT_DATA *heartbeat_data;
 } STATE_T;
 

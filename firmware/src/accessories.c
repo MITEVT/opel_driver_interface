@@ -1,19 +1,12 @@
 #include <stdio.h> 
 #include "types.h"
+#include "util.h"
 
 ACCESSORIES_OUTPUT_REQUEST_T *convert_acc(ACCESSORIES_INPUT_STATE_T *acc_in) {
     return NULL;
 }
 
 ACCESSORIES_OUTPUT_REQUEST_T *turn_all_off() {
-    return NULL;
-}
-
-HEARTBEAT_DATA *reset_heartbeat_data() { 
-    return NULL; 
-} 
-
-HEARTBEAT_DATA *process_input_message(INPUT_MESSAGES *input_messages) {
     return NULL;
 }
 
