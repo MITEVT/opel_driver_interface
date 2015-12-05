@@ -128,7 +128,8 @@ typedef enum {
     ERROR_SHUTDOWN_FAILURE = 7, //Shutdown Failure
     ERROR_INIT = 8, //Initialization Failure
 
-    ERROR_ILLEGAL_STATE_REQUEST = 9
+    ERROR_ILLEGAL_STATE_REQUEST = 9,
+    ERROR_VELOCITY_NOT_ZERO = 10
 } ERROR_T;
 
 /************************************************

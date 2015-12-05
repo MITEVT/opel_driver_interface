@@ -22,7 +22,65 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
     MODE_T mode = state->dsm_mode;
     keymode_req = input->keymodes;
 
-	if(keymode_req == KEYMODE_OFF) {
+	if(keymode_req == KEYMODE_ACCESSORIES) {
+		if(mode != MODE_ACCESSORIES) {
+			return AccStep(input, output, state, REQ_ACCESSORIES);
+		
+        } else if(mode == MODE_CHARGE) {
+            return ChargeStep(input, output, state, REQ_ACCESSORIES);				
+        } else if(mode == MODE_DRIVE) {
+            return DriveStep(input, output, state, REQ_ACCESSORIES);
+
+        } else if(mode == MODE_SHUTDOWN) {
+            return ShutdownStep(input, output, state, REQ_ACCESSORIES);
+
+        } else if(mode == MODE_OFF || mode == MODE_INIT) {
+            return InitStep(input, output, state, REQ_ACCESSORIES);
+
+        } else if(mode == MODE_FAIL) {
+            return FailStep(input, output, state, REQ_OFF);	
+        } 
+
+	} else if(keymode_req == KEYMODE_CHARGE) {
+		if(mode != MODE_ACCESSORIES) {
+			return AccStep(input, output, state, REQ_CHARGE);
+		
+        } else if(mode == MODE_CHARGE) {
+            return ChargeStep(input, output, state, REQ_CHARGE);				
+
+        } else if(mode == MODE_DRIVE) {
+            return DriveStep(input, output, state, REQ_CHARGE);
+
+        } else if(mode == MODE_SHUTDOWN) {
+            return ShutdownStep(input, output, state, REQ_CHARGE);
+
+        } else if(mode == MODE_OFF || mode == MODE_INIT) {
+            return InitStep(input, output, state, REQ_CHARGE);
+
+        } else if(mode == MODE_FAIL) {
+            return FailStep(input, output, state, REQ_CHARGE);	
+        } 
+
+	} else if(keymode_req == KEYMODE_DRIVE) {
+		if(mode != MODE_ACCESSORIES) {
+			return AccStep(input, output, state, REQ_DRIVE);
+		
+        } else if(mode == MODE_CHARGE) {
+            return ChargeStep(input, output, state, REQ_DRIVE);				
+
+        } else if(mode == MODE_DRIVE) {
+            return DriveStep(input, output, state, REQ_DRIVE);
+
+        } else if(mode == MODE_SHUTDOWN) {
+            return ShutdownStep(input, output, state, REQ_DRIVE);
+
+        } else if(mode == MODE_OFF || mode == MODE_INIT) {
+            return InitStep(input, output, state, REQ_DRIVE);
+
+        } else if(mode == MODE_FAIL) {
+            return FailStep(input, output, state, REQ_DRIVE);	
+        } 
+    } else if(keymode_req == KEYMODE_OFF) {
         if(mode == MODE_ACCESSORIES) {
             return AccStep(input, output, state, REQ_SHUTDOWN);
 
@@ -41,42 +99,9 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_OFF) {
 			return ERROR_NONE;
 
-        } else {
+        } else if(mode == MODE_FAIL) {
             return FailStep(input, output, state, REQ_OFF);
         }
-
-	} else if(keymode_req == KEYMODE_ACCESSORIES) {
-		if(mode != MODE_ACCESSORIES) {
-			return AccStep(input, output, state, REQ_ACCESSORIES);
-		
-        } else if(mode == MODE_OFF || mode == MODE_INIT) {
-            return InitStep(input, output, state, REQ_ACCESSORIES);
-
-        } else if(mode == MODE_CHARGE) {
-            mode = MODE_ACCESSORIES;
-            return ChargeStep(input, output, state, REQ_ACCESSORIES);				
-        }else if(mode == MODE_DRIVE) {
-            mode = MODE_ACCESSORIES;
-            return DriveStep(input, output, state, REQ_ACCESSORIES);
-
-        } else if(mode == MODE_FAIL) {
-            return FailStep(input, output, state, REQ_OFF);	
-        } 
-
-	} else if(input->keymodes == KEYMODE_DRIVE) {
-		if(mode != MODE_DRIVE){
-			if(mode == MODE_OFF){
-				mode = MODE_INIT;
-				return ERROR_NONE; 
-			}else if(mode == MODE_INIT){
-				if(Init_GetMode() == INIT_DONE){
-					mode = MODE_DRIVE;
-					return ERROR_NONE
-				}
-			}
-		}else{
-			return DriveStep(input, output, state, REQ_NONE);
-		}
-	}
+    }
 }
 

@@ -29,6 +29,7 @@ ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T
             output->messages = &out_messages;
 
             //Update state
+            //TODO: update state mode here
             state->heartbeat_data = heartbeat_data;
             state->DSM_modes = MODE_ACCESSORIES;
 	        return ERROR_NONE;
