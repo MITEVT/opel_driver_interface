@@ -3,11 +3,21 @@
 #include "util.h"
 
 ACCESSORIES_OUTPUT_REQUEST_T *convert_acc(ACCESSORIES_INPUT_STATE_T *acc_in) {
-    return NULL;
+    ACCESSORIES_OUTPUT_REQUEST_T out_req;
+    out_req->wipers_on = acc_in->wipers_on;
+    out_req->brake_lights_on = acc_in->brake_lights_on;
+    out_req->turn_blinker = acc_in->turn_blinker_switches;
+    out_req->headlight_state = acc_in->headlight_switches;	
+    return out_req;
 }
 
 ACCESSORIES_OUTPUT_REQUEST_T *turn_all_off() {
-    return NULL;
+    ACCESSORITES_OUTPUT_REQUEST_T out_req;
+    out_req->wipers_on = false;
+    out_req->brake_lights_on = false;
+    out_req->turn_blinker = BLINKER_OFF;
+    out_req->headlight_state = HEADLIGHT_OFF;
+    return out_req;
 }
 
 ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request){
@@ -32,7 +42,7 @@ ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T
             //TODO: update state mode here
             state->heartbeat_data = heartbeat_data;
             state->DSM_modes = MODE_ACCESSORIES;
-	        return ERROR_NONE;
+	    return ERROR_NONE;
 
         } case REQ_DRIVE: {
             // Process input: convert acc input requested to acc output request
@@ -49,7 +59,7 @@ ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T
             //Update state
             state->heartbeat_data = heartbeat_data;
             state->DSM_modes = MODE_DRIVE;
-	        return ERROR_NONE;
+	    return ERROR_NONE;
 
         } case REQ_INIT:
             return ERROR_ILLEGAL_STATE_REQUEST;
@@ -67,7 +77,7 @@ ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T
             //Update state
             state->heartbeat_data = heartbeat_data;
             state->DSM_modes = MODE_SHUTDOWN;
-	        return ERROR_NONE;
+	    return ERROR_NONE;
 
         } case REQ_CHARGE:
             // Process input: convert acc input requested to acc output request
@@ -84,7 +94,7 @@ ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T
             //Update state
             state->heartbeat_data = heartbeat_data;
             state->DSM_modes = MODE_CHARGE;
-	        return ERROR_NONE;
+	    return ERROR_NONE;
     }
 	return ERROR_NONE;
 }
