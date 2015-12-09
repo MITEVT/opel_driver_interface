@@ -4,38 +4,53 @@
 
 ACCESSORIES_OUTPUT_REQUEST_T *convert_acc(ACCESSORIES_INPUT_STATE_T *acc_in) {
     ACCESSORIES_OUTPUT_REQUEST_T out_req;
-    out_req->wipers_on = acc_in->wipers_on;
-    out_req->brake_lights_on = acc_in->brake_lights_on;
-    out_req->turn_blinker = acc_in->turn_blinker_switches;
-    out_req->headlight_state = acc_in->headlight_switches;	
-    return out_req;
+    out_req.wipers_on = acc_in->wipers_on;
+    out_req.brake_lights_on = acc_in->brake_lights_on;
+    out_req.turn_blinker = acc_in->turn_blinker_switches;
+    out_req.headlight_state = acc_in->headlight_switches;	
+    return &out_req;
 }
 
 ACCESSORIES_OUTPUT_REQUEST_T *turn_all_off() {
-    ACCESSORITES_OUTPUT_REQUEST_T out_req;
-    out_req->wipers_on = false;
-    out_req->brake_lights_on = false;
-    out_req->turn_blinker = BLINKER_OFF;
-    out_req->headlight_state = HEADLIGHT_OFF;
-    return out_req;
+    ACCESSORIES_OUTPUT_REQUEST_T out_req;
+    out_req.wipers_on = false;
+    out_req.brake_lights_on = false;
+    out_req.turn_blinker = BLINKER_OFF;
+    out_req.headlight_state = HEADLIGHT_OFF;
+    return &out_req;
 }
 
 ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request){
 
+    if(mode_request == REQ_ACCESSORIES) {
+        ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
+        HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
+
+        output->close_contactors = true;
+        output->acc_output = acc_out;
+
+    } else if(mode_request == REQ_CHARGE) {
+
+    } else if(mode_request == REQ_DRIVE) {
+
+    } else if(mode_request == REQ_SHUTDOWN) {
+
+    } else if(mode_request == REQ_OFF) {
+        return ERROR_ILLEGAL_STATE_REQUEST;
+
+    } else if(mode_request == REQ_INIT) {
+
+    } 
+
     switch(mode_request) {
         case REQ_OFF:
-            return ERROR_ILLEGAL_STATE_REQUEST;
 
         case REQ_ACCESSORIES: {
             // Process input: convert acc input requested to acc output request
-            ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
             // Process input: convert received heartbeat to update last received 
-            HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
             //Update output
-            output->close_contactors = true;
-            output->acc_output = acc_out;
             //TODO: should send heartbeat when not driving, but still want low power line?
-            OUTPUT_MESSAGES out_messages = {.test = false, .command_shutdown = false, .send_heartbeat = false};
+            OUTPUT_MESSAGES_T out_messages = {.test = false, .command_shutdown = false, .send_heartbeat = false};
             output->messages = &out_messages;
 
             //Update state
