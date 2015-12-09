@@ -24,6 +24,7 @@ typedef struct {
     uint64_t time_since_PDM_heartbeat; //Power distribution module 
     uint64_t time_since_velocity_heartbeat;
     uint16_t velocity;
+    bool ignore_heartbeats;
 } HEARTBEAT_DATA;
 
 typedef struct {
