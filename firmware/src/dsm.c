@@ -1,6 +1,7 @@
 #include "types.h"
 #include "shutdown.h"
 #include "init.h"
+#include "accessories.h"
 
 ERROR_T check_heartbeat_validity(INPUT_T *input, STATE_T *state) {
     // Check that the heartbeats in *state aren't stale
@@ -14,6 +15,8 @@ void DSM_Init(void){
 
 ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 
+    HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
+    state->heartbeat_data = heartbeat_data;
     ERROR_T error = check_heartbeat_validity(input);
     if(error != ERROR_NONE) {
         return error;

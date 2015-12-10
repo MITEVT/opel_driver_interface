@@ -57,6 +57,10 @@ typedef enum {
     KEYMODE_DRIVE = 3 //Drive Mode
 } KEYMODES_T;
 
+typedef enum {
+    DRIVE_FORWARD = 0,
+    DRIVE_REVERSE = 1
+} DRIVE_DIRECTION_T;
 
 typedef enum {
     HEADLIGHT_OFF = 0,
@@ -78,8 +82,8 @@ typedef struct {
 } ACCESSORIES_INPUT_STATE_T;
 
 typedef struct {
-    bool BMS_heartbeat;
-    bool PDM_heartbeat;
+    bool BMS_heartbeat; //Battery 
+    bool PDM_heartbeat; //Power distribution heartbeat
     bool throttle_heartbeat;
     uint16_t velocity;
     bool init_test;
@@ -88,9 +92,9 @@ typedef struct {
 typedef struct {
     ACCESSORIES_INPUT_STATE_T *acc_input;
     KEYMODES_T *keymodes;
+    DRIVE_DIRECTION_T *direction; //Should only matter if keymode is drive
     INPUT_MESSAGES *messages;
 } INPUT_T;
-
 
 /************************************************
  *              THE OUTPUT TYPES               *
@@ -104,9 +108,15 @@ typedef struct {
 } ACCESSORIES_OUTPUT_REQUEST_T;
 
 typedef struct {
-    bool test; // Request hardware to send test module message to init tests
-    bool send_heartbeat; // Request hardware to send heartbeat
-    bool command_shutdown; // Command a shutdown
+    bool test; // Request hardware to send test module message to run tests
+    // drive_mode: Integer from 0-4 defining the 
+    // 0 = parked (accessory mode/aux)
+    // 1 = charge
+    // 2 = drive forward
+    // 3 = drive reverse
+    // 4 = shutdown impending
+    uint8_t drive_mode; 
+    bool send_heartbeat; // Request hardware to send heartbeat with given data
 } OUTPUT_MESSAGES_T;
 
 typedef struct {

@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-
 HEARTBEAT_DATA *ignore_heartbeat_data() { 
     HEARTBEAT_DATA *hb_data;
     hb_data->ignore_heartbeats = true;
