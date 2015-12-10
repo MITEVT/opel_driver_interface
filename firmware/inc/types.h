@@ -107,11 +107,11 @@ typedef struct {
     bool test; // Request hardware to send test module message to init tests
     bool send_heartbeat; // Request hardware to send heartbeat
     bool command_shutdown; // Command a shutdown
-} OUTPUT_MESSAGES_T;
+} OUTPUT_MESSAGES;
 
 typedef struct {
     ACCESSORIES_OUTPUT_REQUEST_T *acc_output;
-    OUTPUT_MESSAGES_T *messages;
+    OUTPUT_MESSAGES *messages;
     bool close_contactors;
 } OUTPUT_T;
 
@@ -131,6 +131,8 @@ typedef enum {
 
     ERROR_ILLEGAL_STATE_REQUEST = 9,
     ERROR_VELOCITY_NOT_ZERO = 10
+
+    ERROR_LOST_HEARTBEAT = 11
 } ERROR_T;
 
 /************************************************
