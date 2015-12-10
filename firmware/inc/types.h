@@ -82,7 +82,7 @@ typedef struct {
     bool PDM_heartbeat;
     bool throttle_heartbeat;
     uint16_t velocity;
-    bool init_test;
+    bool init_test; //Did we pass the init tests or not?
 } INPUT_MESSAGES;
 
 typedef struct {
