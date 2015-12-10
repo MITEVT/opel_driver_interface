@@ -2,10 +2,23 @@
 #include "shutdown.h"
 #include "init.h"
 #include "accessories.h"
+#include "frequencies.h"
+#include "di_util.h"
+#include "board.h"
 
-ERROR_T check_heartbeat_validity(INPUT_T *input, STATE_T *state) {
+ERROR_T check_heartbeat_validity(STATE_T *state) {
     // Check that the heartbeats in *state aren't stale
-    return NULL;
+    if(state->heartbeat_data->time_since_BMS_heartbeat > 1000.0/BMS_heartbeat_frequency){
+        return ERROR_LOST_HEARTBEAT;
+    }else if(state->heartbeat_data->time_since_throttle_heartbeat > 1000.0/throttle_heartbeat_frequency){
+        return ERROR_LOST_HEARTBEAT;
+    }else if(state->heartbeat_data->time_since_PDM_heartbeat > 1000.0/PDM_heartbeat_frequency){
+        return ERROR_LOST_HEARTBEAT;
+    }else if(state->heartbeat_data->time_since_velocity_heartbeat > 1000.0/velocity_heartbeat_frequency){
+	return ERROR_LOST_HEARTBEAT;
+    }else{
+	return ERROR_NONE;
+    }
 }
 
 void DSM_Init(void){
@@ -15,6 +28,7 @@ void DSM_Init(void){
 
 ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 
+    //Process the input heartbeats, then check to see if the heartbeats are stale.
     HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
     state->heartbeat_data = heartbeat_data;
     ERROR_T error = check_heartbeat_validity(input);

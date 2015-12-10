@@ -121,7 +121,7 @@ typedef struct {
 
 typedef struct {
     ACCESSORIES_OUTPUT_REQUEST_T *acc_output;
-    OUTPUT_MESSAGES_T *messages;
+    OUTPUT_MESSAGES *messages;
     bool close_contactors;
 } OUTPUT_T;
 
@@ -141,6 +141,8 @@ typedef enum {
 
     ERROR_ILLEGAL_STATE_REQUEST = 9,
     ERROR_VELOCITY_NOT_ZERO = 10
+
+    ERROR_LOST_HEARTBEAT = 11
 } ERROR_T;
 
 /************************************************
