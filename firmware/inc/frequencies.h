@@ -1,6 +1,6 @@
 #ifndef _FREQUENCIES_H_
 #define _FREQUENCIES_H_
-
+#include "stdint.h"
 
 //Hertz
 uint32_t BMS_heartbeat_frequency = 1;
