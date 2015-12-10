@@ -8,39 +8,47 @@
 
 ERROR_T check_heartbeat_validity(STATE_T *state) {
     // Check that the heartbeats in *state aren't stale
-    if(state->heartbeat_data->time_since_BMS_heartbeat > 1000.0/BMS_heartbeat_frequency){
+    uint32_t heartbeat_time = state->heartbeat_data->time_since_BMS_heartbeat;
+    uint32_t throttle_time = state->heartbeat_data->time_since_BMS_heartbeat;
+    uint32_t pdm_time = state->heartbeat_data->time_since_BMS_heartbeat;
+    uint32_t velocity_time = state->heartbeat_data->time_since_BMS_heartbeat;
+
+    if(heartbeat_time > 1000.0/BMS_HEARTBEAT_FREQUENCY) {
         return ERROR_LOST_HEARTBEAT;
-    }else if(state->heartbeat_data->time_since_throttle_heartbeat > 1000.0/throttle_heartbeat_frequency){
+
+    } else if(throttle_time > 1000.0/THROTTLE_HEARTBEAT_FREQUENCY) {
         return ERROR_LOST_HEARTBEAT;
-    }else if(state->heartbeat_data->time_since_PDM_heartbeat > 1000.0/PDM_heartbeat_frequency){
+
+    } else if(pdm_time > 1000.0/PDM_HEARTBEAT_FREQUENCY) {
         return ERROR_LOST_HEARTBEAT;
-    }else if(state->heartbeat_data->time_since_velocity_heartbeat > 1000.0/velocity_heartbeat_frequency){
-	return ERROR_LOST_HEARTBEAT;
-    }else{
-	return ERROR_NONE;
+
+    } else if(velocity_time > 1000.0/VELOCITY_HEARTBEAT_FREQUENCY){
+	    return ERROR_LOST_HEARTBEAT;
     }
+	return ERROR_NONE;
 }
 
-void DSM_Init(void){
+STATE_T *DSM_Init(void){
     // Return init state struct
+    // TODO: ^
     return NULL;
 }
 
 ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 
-    //Process the input heartbeats, then check to see if the heartbeats are stale.
+    //Process the input heartbeats, then check to see if the heartbeats are stale
     HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
     state->heartbeat_data = heartbeat_data;
     ERROR_T error = check_heartbeat_validity(input);
-    if(error != ERROR_NONE) {
-        return error;
+    if(error == ERROR_LOST_HEARTBEAT) {
+        return FailStep(input, output, state, REQ_CHARGE);	
     }
 
     MODE_T mode = state->dsm_mode;
     keymode_req = input->keymodes;
 
 	if(keymode_req == KEYMODE_ACCESSORIES) {
-		if(mode != MODE_ACCESSORIES) {
+		if(mode == MODE_ACCESSORIES) {
 			return AccStep(input, output, state, REQ_ACCESSORIES);
 		
         } else if(mode == MODE_CHARGE) {
@@ -59,7 +67,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } 
 
 	} else if(keymode_req == KEYMODE_CHARGE) {
-		if(mode != MODE_ACCESSORIES) {
+		if(mode == MODE_ACCESSORIES) {
 			return AccStep(input, output, state, REQ_CHARGE);
 		
         } else if(mode == MODE_CHARGE) {
