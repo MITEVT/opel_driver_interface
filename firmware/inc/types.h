@@ -19,10 +19,10 @@ typedef enum {
 } MODE_T;
 
 typedef struct {
-    uint64_t time_since_BMS_heartbeat;
-    uint64_t time_since_throttle_heartbeat;
-    uint64_t time_since_PDM_heartbeat; //Power distribution module 
-    uint64_t time_since_velocity_heartbeat;
+    uint32_t time_since_BMS_heartbeat;
+    uint32_t time_since_throttle_heartbeat;
+    uint32_t time_since_PDM_heartbeat; //Power distribution module 
+    uint32_t time_since_velocity_heartbeat;
     uint16_t velocity;
     bool ignore_heartbeats;
 } HEARTBEAT_DATA;
@@ -57,6 +57,10 @@ typedef enum {
     KEYMODE_DRIVE = 3 //Drive Mode
 } KEYMODES_T;
 
+typedef enum {
+    DRIVE_FORWARD = 0,
+    DRIVE_REVERSE = 1
+} DRIVE_DIRECTION_T;
 
 typedef enum {
     HEADLIGHT_OFF = 0,
@@ -78,8 +82,8 @@ typedef struct {
 } ACCESSORIES_INPUT_STATE_T;
 
 typedef struct {
-    bool BMS_heartbeat;
-    bool PDM_heartbeat;
+    bool BMS_heartbeat; //Battery 
+    bool PDM_heartbeat; //Power distribution heartbeat
     bool throttle_heartbeat;
     uint16_t velocity;
     bool init_test; //Did we pass the init tests or not?
@@ -88,9 +92,9 @@ typedef struct {
 typedef struct {
     ACCESSORIES_INPUT_STATE_T *acc_input;
     KEYMODES_T *keymodes;
+    DRIVE_DIRECTION_T *direction; //Should only matter if keymode is drive
     INPUT_MESSAGES *messages;
 } INPUT_T;
-
 
 /************************************************
  *              THE OUTPUT TYPES               *
@@ -103,11 +107,19 @@ typedef struct {
     bool brake_lights_on; //State of brake lights
 } ACCESSORIES_OUTPUT_REQUEST_T;
 
+typedef enum {
+    MESSAGE_PARKED_AUX = 0,
+    MESSAGE_CHARGE = 1,
+    MESSAGE_DRIVE_FORWARD = 2,
+    MESSAGE_DRIVE_REVERSE = 3,
+    MESSAGE_SHUTDOWN_IMPENDING = 4
+} MESSAGE_DRIVE_MODE_T;
+
 typedef struct {
-    bool test; // Request hardware to send test module message to init tests
-    bool send_heartbeat; // Request hardware to send heartbeat
-    bool command_shutdown; // Command a shutdown
-} OUTPUT_MESSAGES;
+    bool test; // Request hardware to send test module message to run tests
+    MESSAGE_DRIVE_MODE_T drive_mode; 
+    bool send_heartbeat; // Request hardware to send heartbeat with given data
+} OUTPUT_MESSAGES_T;
 
 typedef struct {
     ACCESSORIES_OUTPUT_REQUEST_T *acc_output;
@@ -138,11 +150,8 @@ typedef enum {
 /************************************************
  *              STEP METHODS                   *
  ***********************************************/
+ERROR_T DSM_Init(void);
 
 ERROR_T DSM_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state);
-
-ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request);
-
-STATE_T DSM_GetState(void);
 
 #endif

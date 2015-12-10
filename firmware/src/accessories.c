@@ -21,95 +21,70 @@ ACCESSORIES_OUTPUT_REQUEST_T *turn_all_off() {
 }
 
 ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request){
+    
+    ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
 
     if(mode_request == REQ_ACCESSORIES) {
-        ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
-        HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
-
         output->close_contactors = true;
         output->acc_output = acc_out;
 
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        out_messages.drive_mode = MESSAGE_PARKED_AUX;
+        output->messages = &out_messages;
+        
+        state->dsm_mode = MODE_ACCESSORIES;
+	    return ERROR_NONE;
+
     } else if(mode_request == REQ_CHARGE) {
+        output->close_contactors = true;
+        output->acc_output = acc_out;
+
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        out_messages.drive_mode = MESSAGE_CHARGE;
+        output->messages = &out_messages;
+
+        state->dsm_mode = MESSAGE_CHARGE;
+	    return ERROR_NONE;
 
     } else if(mode_request == REQ_DRIVE) {
+        output->close_contactors = true;
+        output->acc_output = acc_out;
+
+        if(input->direction == DRIVE_FORWARD) {
+            out_messages.drive_mode = MESSAGE_DRIVE_FORWARD;
+        } else {
+            out_messages.drive_mode = MESSAGE_DRIVE_REVERSE;
+        }
+
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        output->messages = &out_messages;
+
+        state->dsm_mode = MESSAGE_CHARGE;
+	    return ERROR_NONE;
 
     } else if(mode_request == REQ_SHUTDOWN) {
+        output->close_contactors = true;
+        output->acc_output = turn_all_off();
+
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        output->messages = &out_messages;
+
+        state->dsm_mode = MESSAGE_CHARGE;
+	    return ERROR_NONE;
+
 
     } else if(mode_request == REQ_OFF) {
         return ERROR_ILLEGAL_STATE_REQUEST;
 
     } else if(mode_request == REQ_INIT) {
-
+        return ERROR_ILLEGAL_STATE_REQUEST;
     } 
-
-    switch(mode_request) {
-        case REQ_OFF:
-
-        case REQ_ACCESSORIES: {
-            // Process input: convert acc input requested to acc output request
-            // Process input: convert received heartbeat to update last received 
-            //Update output
-            //TODO: should send heartbeat when not driving, but still want low power line?
-            OUTPUT_MESSAGES_T out_messages = {.test = false, .command_shutdown = false, .send_heartbeat = false};
-            output->messages = &out_messages;
-
-            //Update state
-            //TODO: update state mode here
-            state->heartbeat_data = heartbeat_data;
-            state->DSM_modes = MODE_ACCESSORIES;
-	    return ERROR_NONE;
-
-        } case REQ_DRIVE: {
-            // Process input: convert acc input requested to acc output request
-            ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
-            // Process input: convert received heartbeat to update last received 
-            HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
-
-            //Update output
-            output->close_contactors = true;
-            output->acc_output = acc_out;
-            OUTPUT_MESSAGES out_messages = {.test = false, .command_shutdown = false, .send_heartbeat = true};
-            output->messages = &out_messages;
-
-            //Update state
-            state->heartbeat_data = heartbeat_data;
-            state->DSM_modes = MODE_DRIVE;
-	    return ERROR_NONE;
-
-        } case REQ_INIT:
-            return ERROR_ILLEGAL_STATE_REQUEST;
-
-        case REQ_SHUTDOWN: {
-            ACCESSORIES_OUTPUT_REQUEST_T *acc_out = turn_all_off();
-            HEARTBEAT_DATA *heartbeat_data = reset_heartbeat_data();
-
-            //Update output
-            output->close_contactors = false;
-            output->acc_output = acc_out;
-            OUTPUT_MESSAGES out_messages = {.test = false, .command_shutdown = true, .send_heartbeat = false};
-            output->messages = &out_messages;
-
-            //Update state
-            state->heartbeat_data = heartbeat_data;
-            state->DSM_modes = MODE_SHUTDOWN;
-	    return ERROR_NONE;
-
-        } case REQ_CHARGE:
-            // Process input: convert acc input requested to acc output request
-            ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
-            // Process input: convert received heartbeat to update last received 
-            HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
-
-            //Update output
-            output->close_contactors = true;
-            output->acc_output = acc_out;
-            OUTPUT_MESSAGES out_messages = {.test = false, .command_shutdown = false, .send_heartbeat = false};
-            output->messages = &out_messages;
-
-            //Update state
-            state->heartbeat_data = heartbeat_data;
-            state->DSM_modes = MODE_CHARGE;
-	    return ERROR_NONE;
-    }
-	return ERROR_NONE;
 }
