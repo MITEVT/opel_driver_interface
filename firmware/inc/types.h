@@ -17,6 +17,13 @@ typedef enum {
     MODE_SHUTDOWN = 5, //Normal Shutdown
 } MODE_T;
 
+typedef enum {
+	INIT_OFF = 0, //OFF Mode
+	INIT_TESTING = 1, //Testing Mode
+	INIT_DONE = 2, //Tests Done
+	INIT_FAILED = 3
+} TEST_MODES_T;
+
 typedef struct {
     uint32_t time_since_BMS_heartbeat;
     uint32_t time_since_throttle_heartbeat;
@@ -29,6 +36,7 @@ typedef struct {
 typedef struct {
     MODE_T dsm_mode;
     HEARTBEAT_DATA *heartbeat_data;
+    TEST_MODES_T testing_mode;
 } STATE_T;
 
 
@@ -139,12 +147,5 @@ typedef struct {
     OUTPUT_MESSAGES *messages;
     bool close_contactors;
 } OUTPUT_T;
-
-/************************************************
- *              STEP METHODS                   *
- ***********************************************/
-ERROR_T DSM_Init(void);
-
-ERROR_T DSM_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state);
 
 #endif

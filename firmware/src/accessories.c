@@ -2,7 +2,7 @@
 #include "types.h"
 #include "di_util.h"
 
-ERROR_T AccStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request){
+ERROR_T Acc_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request){
     
     ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
 

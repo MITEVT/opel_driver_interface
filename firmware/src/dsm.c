@@ -1,11 +1,14 @@
+#include "board.h"
+
 #include "types.h"
+#include "di_util.h"
+#include "frequencies.h"
+
+#include "accessories.h"
+#include "drive.h"
+#include "charge.h"
 #include "shutdown.h"
 #include "init.h"
-#include "accessories.h"
-#include "frequencies.h"
-#include "di_util.h"
-#include "board.h"
-#include "fail.h"
 
 ERROR_T check_heartbeat_validity(STATE_T *state) {
     // Check that the heartbeats in *state aren't stale
@@ -55,6 +58,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 		
         } else if(mode == MODE_CHARGE) {
             return ChargeStep(input, output, state, REQ_ACCESSORIES);				
+
         } else if(mode == MODE_DRIVE) {
             return DriveStep(input, output, state, REQ_ACCESSORIES);
 

@@ -1,4 +1,6 @@
 #include "board.h"
+#include "dsm.h"
+#include "di_util.h"
 
 // -------------------------------------------------------------
 // Macro Definitions

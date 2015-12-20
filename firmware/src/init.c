@@ -1,31 +1,78 @@
-#include "init.h"
+#include <stdio.h> 
+#include "types.h"
+#include "di_util.h"
 
-INIT_MODES_T init_mode;
+ERROR_T Init_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_request){
+    
+    ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
+    // TODO Change the below case details to correspond to init state
+    //      (everything currently copied from Accessories SM)
+    //      most important thing: need to run tests
 
-// TODO: keep init_done state (maybe ^?) and respond to both curr MODE_OFF -> other MODE and curr MODE_INIT -> other MODE
+    if(mode_request == REQ_ACCESSORIES) {
+        output->close_contactors = true;
+        output->acc_output = acc_out;
 
-INIT_Init(void){
-	init_mode = INIT_OFF;
-}
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        out_messages.drive_mode = MESSAGE_PARKED_AUX;
+        output->messages = &out_messages;
+        
+        state->dsm_mode = MODE_ACCESSORIES;
+	    return ERROR_NONE;
 
-ERROR_T InitStep(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_T mode_req)}
-	switch(mode_req){
-		case REQ_OFF:
-			init_mode = INIT_OFF;
-			break;
+    } else if(mode_request == REQ_CHARGE) {
+        output->close_contactors = true;
+        output->acc_output = acc_out;
 
-		case REQ_INIT:
-			init_mode = INIT_TESTING;
-			output->messages->req_to_test = true;
-			break;	
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        out_messages.drive_mode = MESSAGE_CHARGE;
+        output->messages = &out_messages;
 
-		default:
-			init_mode = INIT_OFF;
-			break;
-				
-	}	
-}
+        state->dsm_mode = MESSAGE_CHARGE;
+	    return ERROR_NONE;
 
-INIT_MODES_T Init_GetMode(void){
-	return init_mode;
+    } else if(mode_request == REQ_DRIVE) {
+        output->close_contactors = true;
+        output->acc_output = acc_out;
+
+        if(input->direction == DRIVE_FORWARD) {
+            out_messages.drive_mode = MESSAGE_DRIVE_FORWARD;
+        } else {
+            out_messages.drive_mode = MESSAGE_DRIVE_REVERSE;
+        }
+
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        output->messages = &out_messages;
+
+        state->dsm_mode = MODE_DRIVE;
+	    return ERROR_NONE;
+
+    } else if(mode_request == REQ_SHUTDOWN) {
+        output->close_contactors = true;
+        output->acc_output = turn_all_off();
+
+        OUTPUT_MESSAGES out_messages;
+        out_messages.test = false;
+        out_messages.send_heartbeat = true;
+        out_messages.drive_mode = MESSAGE_SHUTDOWN_IMPENDING;
+        output->messages = &out_messages;
+
+        state->dsm_mode = MODE_SHUTDOWN;
+	    return ERROR_NONE;
+
+    } else if(mode_request == REQ_OFF) {
+        return ERROR_ILLEGAL_STATE_REQUEST;
+
+    } else if(mode_request == REQ_INIT) {
+        return ERROR_ILLEGAL_STATE_REQUEST;
+
+    } else {
+        return ERROR_ILLEGAL_STATE_REQUEST;
+    }
 }
