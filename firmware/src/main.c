@@ -6,22 +6,42 @@
 #define CCAN_BAUD_RATE 500000 					// Desired CAN Baud Rate
 #define UART_BAUD_RATE 9600 					// Desired UART Baud Rate
 
-#define BUFFER_SIZE 8
+#define BUF_SIZE 8
 
+#define DI_HEARTBEAT_CAN_ID 0x505
+#define DI_HEARTBEAT_MSG_OBJ 31
+
+#define ERROR_CAN_ID 0x510
+#define ERROR_MSG_OBJ 30
+
+#define DI_HEARTBEAT_DELAY 100                  // 10Hz = once every 100ms
 // -------------------------------------------------------------
 // Static Variable Declaration
 
 extern volatile uint32_t msTicks;
 
-static CCAN_MSG_OBJ_T msg_obj; 					// Message Object data structure for manipulating CAN messages
-static RINGBUFF_T CAN_rx_buffer;				// Ring Buffer for storing received CAN messages
-static CCAN_MSG_OBJ_T _rx_buffer[BUFFER_SIZE]; 	// Underlying array used in ring buffer
+static STATE_T *statep;
+static INPUT_T *inputp;
+static OUTPUT_T *outputp;
 
-static char str[100];							// Used for composing UART messages
-static uint8_t uart_rx_buffer[BUFFER_SIZE]; 	// UART received message buffer
+// Listen to BMS, Velocity, Throttle, and PDM modules, respectively
+const static uint8_t INPUT_CAN_IDs = {0x600, 0x703, 0x700, 0x705};
+const static uint8_t SIZE_INPUT_CAN_IDs = 4;
 
-static bool can_error_flag;
-static uint32_t can_error_info;
+static uint64_t last_heartbeat_time = 0;
+
+// Message Object data structure for manipulating CAN messages
+static CCAN_MSG_OBJ_T msg_obj; 
+
+// Underlying array used in ring buffer
+static CCAN_MSG_OBJ_T _rx_buffer[BUF_SIZE];
+static RINGBUFF_T CAN_rx_buffer;  // Ring Buffer for storing received CAN messages
+
+static char str[100];						// Used for composing UART messages
+static uint8_t uart_rx_buffer[BUF_SIZE]; 	// UART received message buffer
+
+static bool volatile can_error_flag;
+static uint32_t volatile can_error_info;
 
 // -------------------------------------------------------------
 // Helper Functions
@@ -47,7 +67,7 @@ void CAN_rx(uint8_t msg_obj_num) {
 	msg_obj.msgobj = msg_obj_num;
 	/* Now load up the msg_obj structure with the CAN message */
 	LPC_CCAN_API->can_receive(&msg_obj);
-	if (msg_obj_num == 1) {
+	if (is_value_in_arr(msg_obj.mode_id, &INPUT_CAN_IDs, SIZE_INPUT_CAN_IDs)) {
 		RingBuffer_Insert(&CAN_rx_buffer, &msg_obj);
 	}
 }
@@ -57,8 +77,7 @@ void CAN_rx(uint8_t msg_obj_num) {
  * a CAN message has been transmitted 
  * @param msg_obj_num the msg_obj number that transmitted a message
  */
-void CAN_tx(uint8_t msg_obj_num) {
-}
+void CAN_tx(uint8_t msg_obj_num) {}
 
 /**
  * CAN error callback executed by the Callback handler after
@@ -71,123 +90,147 @@ void CAN_error(uint32_t error_info) {
 	can_error_info = error_info;
 }
 
-// -------------------------------------------------------------
-// Interrupt Service Routines
+/*
+ * Helper function to add new CAN ID to listen to (up to 32)
+ */
+void configure_CAN_listen(uint8_t msg_obj_num, uint32_t can_id, uint32_t mask) {
+    CCAN_MSG_OBJ_T listen_msg_obj; 
+	listen_msg_obj.msgobj = msg_obj_num;
+	listen_msg_obj.mode_id = can_id;
+	listen_msg_obj.mask = mask;
+    // TODO check if we can call config_rxmsobj with multiple msg_obj values
+	LPC_CCAN_API->config_rxmsgobj(&msg_obj);
+}
 
+void startup_routine(void) {
+	// Initialize SysTick Timer to generate millisecond count
+	if (Board_SysTick_Init()) {
+		while(1); // Unrecoverable Error. Hang. 
+	}
+
+	// Initialize GPIO and LED as output
+	Board_LEDs_Init();
+	Board_LED_On(LED0);
+
+	// Initialize UART Communication
+	Board_UART_Init(UART_BAUD_RATE);
+	Board_UART_Println("Started up driver interface!");
+
+	// Initialize CAN  and CAN Ring Buffer
+	RingBuffer_Init(&CAN_rx_buffer, _rx_buffer, sizeof(CCAN_MSG_OBJ_T), BUF_SIZE);
+	RingBuffer_Flush(&CAN_rx_buffer);
+
+	Board_CAN_Init(CCAN_BAUD_RATE, CAN_rx, CAN_tx, CAN_error);
+	can_error_flag = false;
+
+    statep = DSM_Init();
+}
+
+void process_UART_commands(void) {
+    uint8_t count;
+    if ((count = Board_UART_Read(uart_rx_buffer, BUF_SIZE)) != 0) {
+        Board_UART_SendBlocking(uart_rx_buffer, count); // Echo user input
+        switch (uart_rx_buffer[0]) {
+            case 's': 
+                // TODO print current state
+                break;
+            case 'i':
+                // TODO print current input accessory requests
+                break;
+            default:
+                Board_UART_Println("\r\nUnknown command!");
+        }
+    }
+}
+
+void broadcast_heartbeat_message(uint8_t data[8]) {
+    msg_obj.msgobj = DI_HEARTBEAT_MSG_OBJ;
+    msg_obj.mode_id = DI_HEARTBEAT_CAN_ID;
+    msg_obj.mask = 0xFFFFFFFF;
+    msg_obj.dlc = 8;
+    msg_obj.data = data;
+
+    LPC_CCAN_API->can_transmit(&msg_obj);
+    // TODO Print more information about broadcast message
+    Board_UART_Println("\r\nSent DI heartbeat.");
+}
+
+void broadcast_error_message(uint8_t data[8]) {
+    msg_obj.msgobj = ERROR_MSG_OBJ;
+    msg_obj.mode_id = ERROR_CAN_ID;
+    msg_obj.mask = 0xFFFFFFFF;
+    msg_obj.dlc = 8;
+    msg_obj.data = data;
+
+    LPC_CCAN_API->can_transmit(&msg_obj);
+    // TODO Print more information about error broadcast message
+    Board_UART_Println("\r\nSent error message.");
+}
+
+void process_output_requests(OUTPUT_T *output) {
+    // TODO Adjust pin outputs, and send heartbeat, if necessary by timer
+    //      Makes call to broadcast_heartbeat_message
+    
+    // if (msTicks - last_heartbeat_time > DI_HEARTBEAT_DELAY) {
+    //    last_heartbeat_time = msTicks;
+    //    broadcast_heartbeat_message();
+    // }
+}
+
+INPUT_T *read_input_requests(void) {
+    // TODO Read off of ring buffer, pins and populate an input request struct
+    
+    //  while(!RingBuffer_IsEmpty(&CAN_rx_buffer)) {
+    //      CCAN_MSG_OBJ_T temp_msg;
+    //      RingBuffer_Pop(&rx_buffer, &temp_msg);
+    //      ...
+    //
+    //  }
+    return NULL;
+}
+
+bool handle_error(ERROR_T error) {
+    // TODO Process error appropriately, changing state if needed
+    //      outputs True/False if should subsequently process_output_requests()
+    //      should be called. Makes call to broadcast_error_message(...)
+    return NULL;
+}
+
+void check_CAN_error(void) {
+    if (can_error_flag) {
+        Board_UART_Print("CAN Error. Info: ");
+        can_error_flag = false;
+
+        itoa(can_error_info, str, 2);
+        Board_UART_Println(str);
+    }
+}
 
 // -------------------------------------------------------------
 // Main Program Loop
 
 int main(void) {
+    startup_routine();
 
-	//---------------
-	// Initialize SysTick Timer to generate millisecond count
-	if (Board_SysTick_Init()) {
-		// Unrecoverable Error. Hang.
-		while(1);
-	}
-
-	//---------------
-	// Initialize GPIO and LED as output
-	Board_LEDs_Init();
-	Board_LED_On(LED0);
-
-	//---------------
-	// Initialize UART Communication
-	Board_UART_Init(UART_BAUD_RATE);
-	Board_UART_Println("Started up");
-
-	//---------------
-	// Initialize CAN  and CAN Ring Buffer
-
-	RingBuffer_Init(&CAN_rx_buffer, _rx_buffer, sizeof(CCAN_MSG_OBJ_T), BUFFER_SIZE);
-	RingBuffer_Flush(&CAN_rx_buffer);
-
-	Board_CAN_Init(CCAN_BAUD_RATE, CAN_rx, CAN_tx, CAN_error);
- 
-	// For your convenience.
-	// typedef struct CCAN_MSG_OBJ {
-	// 	uint32_t  mode_id;
-	// 	uint32_t  mask;
-	// 	uint8_t   data[8];
-	// 	uint8_t   dlc;
-	// 	uint8_t   msgobj;
-	// } CCAN_MSG_OBJ_T;
-
-	/* [Tutorial] How do filters work?
-
-		Incoming ID & Mask == Mode_ID for msgobj to accept message
-
-		Incoming ID : 0xabc
-		Mask: 		  0xF0F &
-		            -----------
-		              0xa0c
-
-		mode_id == 0xa0c for msgobj to accept message
-
-	*/
-
-	// /* Configure message object 1 to receive all 11-bit messages */
-	msg_obj.msgobj = 1;
-	msg_obj.mode_id = 0x000;
-	msg_obj.mask = 0x000;
-	LPC_CCAN_API->config_rxmsgobj(&msg_obj);
-
-	can_error_flag = false;
+    // Listen to heartbeats/regular messages from other modules
+    configure_CAN_listen(0, INPUT_CAN_IDs[0], 0xFFFFFFFF); // BMS
+    configure_CAN_listen(1, INPUT_CAN_IDs[1], 0xFFFFFFFF); // Velocity
+    configure_CAN_listen(2, INPUT_CAN_IDs[2], 0xFFFFFFFF); // Throttle
+    configure_CAN_listen(3, INPUT_CAN_IDs[3], 0xFFFFFFFF); // PDM
 
 	while (1) {
-		uint8_t count;
-		if ((count = Board_UART_Read(uart_rx_buffer, BUFFER_SIZE)) != 0) {
-			Board_UART_SendBlocking(uart_rx_buffer, count); // Echo user input
-			switch (uart_rx_buffer[0]) {
-				case 't': // Send a hello world
-					Board_UART_Println("\r\nHello World"); 
-					break;
-				case 's': // Transmit a message
-					msg_obj.msgobj = 2;
-					msg_obj.mode_id = 0x001;
-					msg_obj.dlc = 1;
-					msg_obj.data[0] = 0xFF;
+        process_UART_commands();
 
-					LPC_CCAN_API->can_transmit(&msg_obj);
-					Board_UART_Println("\r\nSent CAN Message");
+        inputp = read_input_requests();
 
-					break;
-			}
-		}
+        ERROR_T step_error;
+        step_error = DSM_Step(inputp, statep, outputp);
+        bool process_outputs = handle_error(inputp, outputp, step_error);
 
-		if (!RingBuffer_IsEmpty(&CAN_rx_buffer)) {
-			CCAN_MSG_OBJ_T temp_msg;
-			RingBuffer_Pop(&CAN_rx_buffer, &temp_msg);
-			Board_UART_Println("Received Message");
-		}	
+        if(process_outputs) {
+            process_output_requests(outputp);
+        }
 
-	// 	/* [Tutorial] How do I send a CAN Message?
-
-	// 	There are 32 Message Objects in the CAN Peripherals Message RAM.
-	// 	We need to pick one that isn't setup for receiving messages and use it to send.
-
-	// 	For this exmaple we'll pick 31
-
-	// 	msg_obj.msgobj = 31;
-	// 	msg_obj.mode_id = 0x600; 		// CAN ID of Message to Send
-	// 	msg_obj.dlc = 8; 				// Byte length of CAN Message
-	// 	msg_obj.data[0] = 0xAA; 		// Fill your bytes here
-	// 	msg_obj.data[1] = ..;
-	// 	..
-	// 	msg_obj.data[7] = 0xBB:
-
-	// 	Now its time to send
-	// 	LPC_CCAN_API->can_transmit(&msg_obj);
-
-	// 	*/
-
-		if (can_error_flag) {
-			Board_UART_Print("CAN Error. Info: ");
-			can_error_flag = false;
-
-			itoa(can_error_info, str, 2);
-			Board_UART_Println(str);
-		}
+        check_CAN_error();
 	}
 }

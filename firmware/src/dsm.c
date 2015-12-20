@@ -5,6 +5,7 @@
 #include "frequencies.h"
 #include "di_util.h"
 #include "board.h"
+#include "fail.h"
 
 ERROR_T check_heartbeat_validity(STATE_T *state) {
     // Check that the heartbeats in *state aren't stale
@@ -14,34 +15,35 @@ ERROR_T check_heartbeat_validity(STATE_T *state) {
     uint32_t velocity_time = state->heartbeat_data->time_since_BMS_heartbeat;
 
     if(heartbeat_time > 1000.0/BMS_HEARTBEAT_FREQUENCY) {
-        return ERROR_LOST_HEARTBEAT;
+        return ERROR_LOST_BMS_HEARTBEAT;
 
     } else if(throttle_time > 1000.0/THROTTLE_HEARTBEAT_FREQUENCY) {
-        return ERROR_LOST_HEARTBEAT;
+        return ERROR_LOST_THROTTLE_HEARTBEAT;
 
     } else if(pdm_time > 1000.0/PDM_HEARTBEAT_FREQUENCY) {
-        return ERROR_LOST_HEARTBEAT;
+        return ERROR_LOST_PDM_HEARTBEAT;
 
     } else if(velocity_time > 1000.0/VELOCITY_HEARTBEAT_FREQUENCY){
-	    return ERROR_LOST_HEARTBEAT;
+	    return ERROR_LOST_VELOCITY_HEARTBEAT;
     }
 	return ERROR_NONE;
 }
 
 STATE_T *DSM_Init(void){
-    // Return init state struct
-    // TODO: ^
-    return NULL;
+    STATE_T init_state;
+    init_state.dsm_mode = MODE_OFF;
+    init_state.heartbeat_data = initialize_heartbeat_data();
+    return &init_state;
 }
 
 ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 
-    //Process the input heartbeats, then check to see if the heartbeats are stale
+    // Process input heartbeats, then check to see if the heartbeats are stale
     HEARTBEAT_DATA *heartbeat_data = process_input_message(input->messages);
     state->heartbeat_data = heartbeat_data;
     ERROR_T error = check_heartbeat_validity(input);
-    if(error == ERROR_LOST_HEARTBEAT) {
-        return FailStep(input, output, state, REQ_CHARGE);	
+    if(error != ERROR_NONE) {
+        return error
     }
 
     MODE_T mode = state->dsm_mode;
@@ -61,9 +63,6 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 
         } else if(mode == MODE_OFF || mode == MODE_INIT) {
             return InitStep(input, output, state, REQ_ACCESSORIES);
-
-        } else if(mode == MODE_FAIL) {
-            return FailStep(input, output, state, REQ_OFF);	
         } 
 
 	} else if(keymode_req == KEYMODE_CHARGE) {
@@ -81,10 +80,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 
         } else if(mode == MODE_OFF || mode == MODE_INIT) {
             return InitStep(input, output, state, REQ_CHARGE);
-
-        } else if(mode == MODE_FAIL) {
-            return FailStep(input, output, state, REQ_CHARGE);	
-        } 
+        }
 
 	} else if(keymode_req == KEYMODE_DRIVE) {
 		if(mode != MODE_ACCESSORIES) {
@@ -105,6 +101,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_FAIL) {
             return FailStep(input, output, state, REQ_DRIVE);	
         } 
+
     } else if(keymode_req == KEYMODE_OFF) {
         if(mode == MODE_ACCESSORIES) {
             return AccStep(input, output, state, REQ_SHUTDOWN);
@@ -123,9 +120,6 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 		
         } else if(mode == MODE_OFF) {
 			return ERROR_NONE;
-
-        } else if(mode == MODE_FAIL) {
-            return FailStep(input, output, state, REQ_OFF);
         }
     }
 }

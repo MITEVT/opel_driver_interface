@@ -1,6 +1,16 @@
 #include <stdio.h>
+#include <stdbool.h>
 
-HEARTBEAT_DATA *ignore_heartbeat_data() { 
+bool is_value_in_arr(uint8_t val, uint8_t *arr, uint_8 size) {
+    int i;
+    for (i=0; i < size; i++) {
+        if (arr[i] == val)
+            return true;
+    }
+    return false;
+}
+
+HEARTBEAT_DATA *initialize_heartbeat_data() { 
     HEARTBEAT_DATA *hb_data;
     hb_data->ignore_heartbeats = true;
     hb_data->time_since_BMS_heartbeat = 0;
@@ -22,3 +32,22 @@ HEARTBEAT_DATA *process_input_message(INPUT_MESSAGES *input_messages, HEARTBEAT_
 
     return hb_data;
 }
+
+ACCESSORIES_OUTPUT_REQUEST_T *convert_acc(ACCESSORIES_INPUT_STATE_T *acc_in) {
+    ACCESSORIES_OUTPUT_REQUEST_T out_req;
+    out_req.wipers_on = acc_in->wipers_on;
+    out_req.brake_lights_on = acc_in->brake_lights_on;
+    out_req.turn_blinker = acc_in->turn_blinker_switches;
+    out_req.headlight_state = acc_in->headlight_switches;	
+    return &out_req;
+}
+
+ACCESSORIES_OUTPUT_REQUEST_T *turn_all_off() {
+    ACCESSORIES_OUTPUT_REQUEST_T out_req;
+    out_req.wipers_on = false;
+    out_req.brake_lights_on = false;
+    out_req.turn_blinker = BLINKER_OFF;
+    out_req.headlight_state = HEADLIGHT_OFF;
+    return &out_req;
+}
+

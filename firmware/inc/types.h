@@ -15,7 +15,6 @@ typedef enum {
     MODE_DRIVE = 3, //Drive Mode
     MODE_INIT = 4, //Initialization Mode
     MODE_SHUTDOWN = 5, //Normal Shutdown
-    MODE_FAIL = 6 //Error Mode
 } MODE_T;
 
 typedef struct {
@@ -115,9 +114,23 @@ typedef enum {
     MESSAGE_SHUTDOWN_IMPENDING = 4
 } MESSAGE_DRIVE_MODE_T;
 
+typedef enum {
+    ERROR_NONE = 0,
+
+    ERROR_ILLEGAL_STATE_REQUEST = 1,
+
+    ERROR_LOST_BMS_HEARTBEAT = 2,
+    ERROR_LOST_THROTTLE_HEARTBEAT = 3,
+    ERROR_LOST_PDM_HEARTBEAT = 4,
+    ERROR_LOST_VELOCITY_HEARTBEAT = 5,
+
+    ERROR_VELOCITY_NOT_ZERO = 6
+} ERROR_T;
+
 typedef struct {
     bool test; // Request hardware to send test module message to run tests
     MESSAGE_DRIVE_MODE_T drive_mode; 
+    ERROR_T error; 
     bool send_heartbeat; // Request hardware to send heartbeat with given data
 } OUTPUT_MESSAGES_T;
 
@@ -126,26 +139,6 @@ typedef struct {
     OUTPUT_MESSAGES *messages;
     bool close_contactors;
 } OUTPUT_T;
-
-typedef enum {
-    ERROR_NONE = 0, //No Error
-
-    ERROR_CAN_BUS = 1, //Can bus error
-    ERROR_HEADLIGHTS = 2, //Headlights error
-    ERROR_BRAKELIGHTS = 3, //Brakelights error
-
-    // From which state did we reach the error state?
-    ERROR_CHARGE = 4, //Charge Failure
-    ERROR_DRIVE = 5, //Drive Failure
-    ERROR_ACCESSORIES = 6, //Accessories Failure
-    ERROR_SHUTDOWN_FAILURE = 7, //Shutdown Failure
-    ERROR_INIT = 8, //Initialization Failure
-
-    ERROR_ILLEGAL_STATE_REQUEST = 9,
-    ERROR_VELOCITY_NOT_ZERO = 10
-
-    ERROR_LOST_HEARTBEAT = 11
-} ERROR_T;
 
 /************************************************
  *              STEP METHODS                   *
