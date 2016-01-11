@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-bool is_value_in_arr(uint8_t val, uint8_t *arr, uint_8 size) {
+bool is_value_in_arr(uint8_t val, uint8_t *arr, uint8_t size) {
     int i;
     for (i=0; i < size; i++) {
         if (arr[i] == val)
