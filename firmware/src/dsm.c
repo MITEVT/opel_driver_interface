@@ -36,6 +36,7 @@ STATE_T *DSM_Init(void){
     STATE_T init_state;
     init_state.dsm_mode = MODE_OFF;
     init_state.heartbeat_data = initialize_heartbeat_data();
+    init_state.testing_mode = INIT_OFF;
     return &init_state;
 }
 
@@ -63,11 +64,14 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
             return DriveStep(input, output, state, REQ_ACCESSORIES);
 
         } else if(mode == MODE_SHUTDOWN) {
-            return ShutdownStep(input, output, state, REQ_ACCESSORIES);
+            return ShutdownStep(input, output, state, REQ_ACCESSORIES); //Is this safe? Should we be able to go from shutdown to accessories?
 
-        } else if(mode == MODE_OFF || mode == MODE_INIT) {
-            return InitStep(input, output, state, REQ_ACCESSORIES);
-        } 
+        } else if(mode == MODE_OFF) {
+            return InitStep(input, output, state, REQ_INIT);
+
+        } else if(mode == MODE_INIT){
+	    return InitStep(input, output, state, REQ_ACCESSORIES);
+	}
 
 	} else if(keymode_req == KEYMODE_CHARGE) {
 		if(mode == MODE_ACCESSORIES) {
@@ -82,9 +86,12 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_SHUTDOWN) {
             return ShutdownStep(input, output, state, REQ_CHARGE);
 
-        } else if(mode == MODE_OFF || mode == MODE_INIT) {
-            return InitStep(input, output, state, REQ_CHARGE);
-        }
+        } else if(mode == MODE_OFF) {
+            return InitStep(input, output, state, REQ_INIT);
+
+        } else if(mode == MODE_INIT){
+	    return InitStep(input, output, state, REQ_CHARGE)
+	}
 
 	} else if(keymode_req == KEYMODE_DRIVE) {
 		if(mode != MODE_ACCESSORIES) {
@@ -99,11 +106,11 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_SHUTDOWN) {
             return ShutdownStep(input, output, state, REQ_DRIVE);
 
-        } else if(mode == MODE_OFF || mode == MODE_INIT) {
-            return InitStep(input, output, state, REQ_DRIVE);
+        } else if(mode == MODE_OFF) {
+            return InitStep(input, output, state, REQ_INIT);
 
-        } else if(mode == MODE_FAIL) {
-            return FailStep(input, output, state, REQ_DRIVE);	
+        } else if(mode == MODE_INIT) {
+            return InitStep(input, output, state, REQ_DRIVE);	
         } 
 
     } else if(keymode_req == KEYMODE_OFF) {
@@ -120,7 +127,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
             return ShutdownStep(input, output, state, REQ_OFF);
 
         } else if(mode == MODE_INIT) {
-            return InitStep(input, output, state, REQ_SHUTDOWN);
+            return InitStep(input, output, state, REQ_OFF);
 		
         } else if(mode == MODE_OFF) {
 			return ERROR_NONE;
