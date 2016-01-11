@@ -10,7 +10,7 @@ ERROR_T Acc_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_
         output->close_contactors = true;
         output->acc_output = acc_out;
 
-        OUTPUT_MESSAGES out_messages;
+        OUTPUT_MESSAGES_T out_messages;
         out_messages.test = false;
         out_messages.send_heartbeat = true;
         out_messages.drive_mode = MESSAGE_PARKED_AUX;
@@ -23,13 +23,13 @@ ERROR_T Acc_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_
         output->close_contactors = true;
         output->acc_output = acc_out;
 
-        OUTPUT_MESSAGES out_messages;
+        OUTPUT_MESSAGES_T out_messages;
         out_messages.test = false;
         out_messages.send_heartbeat = true;
         out_messages.drive_mode = MESSAGE_CHARGE;
         output->messages = &out_messages;
 
-        state->dsm_mode = MESSAGE_CHARGE;
+        state->dsm_mode = MODE_CHARGE;
 	    return ERROR_NONE;
 
     } else if(mode_request == REQ_DRIVE) {
@@ -42,7 +42,7 @@ ERROR_T Acc_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_
             out_messages.drive_mode = MESSAGE_DRIVE_REVERSE;
         }
 
-        OUTPUT_MESSAGES out_messages;
+        OUTPUT_MESSAGES_T out_messages;
         out_messages.test = false;
         out_messages.send_heartbeat = true;
         output->messages = &out_messages;
@@ -54,7 +54,7 @@ ERROR_T Acc_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_
         output->close_contactors = true;
         output->acc_output = turn_all_off();
 
-        OUTPUT_MESSAGES out_messages;
+        OUTPUT_MESSAGES_T out_messages;
         out_messages.test = false;
         out_messages.send_heartbeat = true;
         out_messages.drive_mode = MESSAGE_SHUTDOWN_IMPENDING;
