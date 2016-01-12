@@ -4,12 +4,22 @@
 #include "di_util.h"
 #include <stdbool.h>
 
-    //TODO: returns true if we failed our tests
-bool checkTestValidity(INPUT_T *input, STATE_T *state){
+    //returns true if we timed out on our tests (could possibly be simplified
+    //to look much cleaner).
+bool checkTimeout(INPUT_T *input, STATE_T *state){
     if(input->messages->init_test){
 	return false;
-    }else if(){ //condition that determines if we failed our tests.
-        return true;
+    }else if(state->testing_mode == INIT_TESTING){
+        if(state->counter == 0){
+	    state->time_since_test_start = msTicks;
+	    state->counter++;
+	    return false;
+	//arbirarily chose 5 seconds as the timeout time.
+        }else if(msTicks - state->time_since_test_start > 5000){
+	    return true;
+  	}else{
+	    return false
+	}
     }else{
         return false;
     }

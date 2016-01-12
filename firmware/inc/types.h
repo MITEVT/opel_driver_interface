@@ -37,6 +37,8 @@ typedef struct {
     MODE_T dsm_mode;
     HEARTBEAT_DATA *heartbeat_data;
     TEST_MODES_T testing_mode;
+    uint32_t time_since_test_start;
+    int counter; //0 if we started tests, 1 if we have. Used in checkTimeout in init.c
 } STATE_T;
 
 

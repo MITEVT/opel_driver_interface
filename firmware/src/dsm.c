@@ -37,6 +37,8 @@ STATE_T *DSM_Init(void){
     init_state.dsm_mode = MODE_OFF;
     init_state.heartbeat_data = initialize_heartbeat_data();
     init_state.testing_mode = INIT_OFF;
+    init_state.time_since_test_start = NULL;
+    init_state.counter = 0;
     return &init_state;
 }
 
