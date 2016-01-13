@@ -66,7 +66,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
             return DriveStep(input, output, state, REQ_ACCESSORIES);
 
         } else if(mode == MODE_SHUTDOWN) {
-            return ShutdownStep(input, output, state, REQ_ACCESSORIES); //Is this safe? Should we be able to go from shutdown to accessories?
+            return ShutdownStep(input, output, state, REQ_OFF);
 
         } else if(mode == MODE_OFF) {
             return InitStep(input, output, state, REQ_INIT);
@@ -86,7 +86,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
             return DriveStep(input, output, state, REQ_CHARGE);
 
         } else if(mode == MODE_SHUTDOWN) {
-            return ShutdownStep(input, output, state, REQ_CHARGE);
+            return ShutdownStep(input, output, state, REQ_OFF);
 
         } else if(mode == MODE_OFF) {
             return InitStep(input, output, state, REQ_INIT);
@@ -106,7 +106,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
             return DriveStep(input, output, state, REQ_DRIVE);
 
         } else if(mode == MODE_SHUTDOWN) {
-            return ShutdownStep(input, output, state, REQ_DRIVE);
+            return ShutdownStep(input, output, state, REQ_OFF);
 
         } else if(mode == MODE_OFF) {
             return InitStep(input, output, state, REQ_INIT);
