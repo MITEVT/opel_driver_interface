@@ -1,6 +1,7 @@
 #include "board.h"
 #include "dsm.h"
 #include "di_util.h"
+#include "types.h"
 
 // -------------------------------------------------------------
 // Macro Definitions
@@ -134,10 +135,35 @@ void process_UART_commands(void) {
         Board_UART_SendBlocking(uart_rx_buffer, count); // Echo user input
         switch (uart_rx_buffer[0]) {
             case 's': 
-                // TODO print current state
+		MODE_T current_dsm_state = statep->dsm_mode;
+		if(current_dsm_state == MODE_OFF){
+		    BOARD_UART_Println("\r\nCar is in OFF state.");
+		}else if(current_dsm_state == MODE_ACCESSORIES) {
+		    BOARD_UART_Println("\r\nCar is in AUX state.");
+		}else if(current_dsm_state == MODE_CHARGE) {
+		    BOARD_UART_Println("\r\nCar is in Charge state.");
+		}else if(current_dsm_state == MODE_DRIVE) {
+		    BOARD_UART_Println("\r\nCar is in Drive state.");
+		}else if(current_dsm_state == MODE_INIT) {
+		    BOARD_UART_Println("\r\nCar is in Testing state.");
+		}else {
+		    BOARD_UART_Println("\r\nCar is in Shutdown state.");
+		}
                 break;
             case 'i':
-                // TODO print current input accessory requests
+		INPUT_MESSAGES* inp_messages = inputp->messages;
+		
+		//Heartbeats
+		BOARD_UART_Println("\rHEARTBEATS:");	
+		BOARD_UART_Printf("\rBMS: %s\n", (inp_messages->BMS_heartbeat) ? "On" : "Off");
+		BOARD_UART_Printf("\rPDM: %s\n", (inp_messages->PDM_heartbeat) ? "On" : "Off");
+		BOARD_UART_Printf("\rThrottle: %s\n\n", (inp_messages->throttle_heartbeat) ? "On" : "Off");
+		
+		//Other Info
+		BOARD_UART_Println("\rOTHER INFO:")
+		BOARD_UART_Printf("\r\nVelocity: %d", (inp_messages->velocity);
+		BOARD_UART_Printf("\r\nPassed Init Tests?: %s\n", (inp_messages->init_test) ? "Yes" : "No");
+		// TODO print current input accessory requests
                 break;
             default:
                 Board_UART_Println("\r\nUnknown command!");
