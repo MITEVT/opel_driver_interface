@@ -20,7 +20,7 @@ ERROR_T Shutdown_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQ
 	
 	//follow the shutdown sequence
 	output->close_contactors = false;
-	output->acc_output = acc_out;
+	output->acc_output = turn_all_off();
 
 	OUTPUT_MESSAGES_T out_messages;
 	out_messages.test = false;
