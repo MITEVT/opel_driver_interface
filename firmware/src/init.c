@@ -29,13 +29,8 @@ ERROR_T Init_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST
     
     ACCESSORIES_OUTPUT_REQUEST_T *acc_out = convert_acc(input->acc_input);
     passedInitTests = input->messages->init_test;
-    // TODO Change the below case details to correspond to init state
-    //      (everything currently copied from Accessories SM)
-    //      most important thing: need to run tests
-    
-    //chose 2 seconds arbitrarily as the time limit
 
-    if(checkTestValidity(input, state)){
+       if(checkTestValidity(input, state)){
         return ERROR_TESTS_FAILED;
     }
 
