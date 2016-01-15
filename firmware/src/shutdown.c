@@ -25,7 +25,7 @@ ERROR_T Shutdown_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQ
 	OUTPUT_MESSAGES_T out_messages;
 	out_messages.test = false;
 	out_messages.send_heartbeat = false;
-	out_messages.drive_mode = MESSAGE_PARKED_AUX;
+	out_messages.drive_mode = (!BMS_hb && !PDM_hb && !throttle_hb) ? MESSAGE_PARKED_AUX : MESSAGE_SHUTDOWN_IMPENDING;
 	output->messages = &out_messages;
 	
 	//If adding FAIL state mode, then add a possibility of entering the
