@@ -8,6 +8,10 @@ ERROR_T Drive_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUES
     // TODO Change the below case details to correspond to drive state
     //      (everything currently copied from Accessories SM)
 
+
+    //shouldn't this be untouched? when it comes to the DI, everything in 
+    //we can do in accessories should also be able to be done in drive.
+
     if(mode_request == REQ_ACCESSORIES) {
         output->close_contactors = true;
         output->acc_output = acc_out;
