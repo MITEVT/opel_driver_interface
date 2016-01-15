@@ -71,7 +71,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_OFF) {
             return InitStep(input, output, state, REQ_INIT);
 
-        } else if(mode == MODE_INIT){
+        } else(mode == MODE_INIT){
 	    return InitStep(input, output, state, REQ_ACCESSORIES);
 	}
 
@@ -79,7 +79,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
 		if(mode == MODE_ACCESSORIES) {
 			return AccStep(input, output, state, REQ_CHARGE);
 		
-        } else if(mode == MODE_CHARGE) {
+       	 } else if(mode == MODE_CHARGE) {
             return ChargeStep(input, output, state, REQ_CHARGE);				
 
         } else if(mode == MODE_DRIVE) {
@@ -91,7 +91,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_OFF) {
             return InitStep(input, output, state, REQ_INIT);
 
-        } else if(mode == MODE_INIT){
+        } else(mode == MODE_INIT){
 	    return InitStep(input, output, state, REQ_CHARGE)
 	}
 
@@ -111,7 +111,7 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_OFF) {
             return InitStep(input, output, state, REQ_INIT);
 
-        } else if(mode == MODE_INIT) {
+        } else(mode == MODE_INIT) {
             return InitStep(input, output, state, REQ_DRIVE);	
         } 
 
@@ -131,8 +131,8 @@ ERROR_T DSM_Step(INPUT_T *input, STATE_T *state, OUTPUT_T *output){
         } else if(mode == MODE_INIT) {
             return InitStep(input, output, state, REQ_OFF);
 		
-        } else if(mode == MODE_OFF) {
-			return ERROR_NONE;
+        } else(mode == MODE_OFF) {
+   	    return ERROR_NONE;
         }
     }
 }
