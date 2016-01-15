@@ -101,7 +101,7 @@ typedef struct {
 typedef struct {
     ACCESSORIES_INPUT_STATE_T *acc_input;
     KEYMODES_T *keymodes;
-    DRIVE_DIRECTION_T *direction; //Should only matter if keymode is drive
+    DRIVE_DIRECTION_T direction; //Should only matter if keymode is drive
     INPUT_MESSAGES *messages;
 } INPUT_T;
 
