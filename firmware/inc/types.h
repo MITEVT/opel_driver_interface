@@ -34,6 +34,7 @@ typedef struct {
 } HEARTBEAT_DATA;
 
 typedef struct {
+    DRIVE_DIRECTION_T direction;
     MODE_T dsm_mode;
     HEARTBEAT_DATA *heartbeat_data;
     TEST_MODES_T testing_mode;
