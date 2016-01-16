@@ -152,19 +152,81 @@ void process_UART_commands(void) {
                 break;
             case 'i':
 		INPUT_MESSAGES* inp_messages = inputp->messages;
-		
+		KEYMODES_T key_mode = inputp->keymodes;
+		ACCESSORIES_INPUT_STATE_T* acc_in = inputp->acc_input;	
+		DRIVE_DIRECTION_T dir = inputp->direction;		
+		HEADLIGHT_STATE_T headlights = acc_in->headlight_switches;
+		TURN_BLINKER_T turnlights = acc_in->turn_blinker_switches;	
+	
 		//Heartbeats
-		BOARD_UART_Println("\rHEARTBEATS:");	
-		BOARD_UART_Printf("\rBMS: %s\n", (inp_messages->BMS_heartbeat) ? "On" : "Off");
-		BOARD_UART_Printf("\rPDM: %s\n", (inp_messages->PDM_heartbeat) ? "On" : "Off");
-		BOARD_UART_Printf("\rThrottle: %s\n\n", (inp_messages->throttle_heartbeat) ? "On" : "Off");
+		BOARD_UART_Println("\rHEARTBEATS:\n");	
+
+		BOARD_UART_Print("\rBMS: ");
+		BOARD_UART_Println((inp_messages->BMS_heartbeat) ? "On" : "Off");
+
+		BOARD_UART_Print("\rPDM: ");
+		BOARD_UART_Println((inp_messages->PDM_heartbeat) ? "On" : "Off");
+		BOARD_UART_Print("\rThrottle: ");
+		BOARD_UART_Println((inp_messages->throttle_heartbeat) ? "On\n" : "Off\n");
+		
+		//Accessory Inputs
+		BOARD_UART_Println("\rACCESSORY INPUTS:\n");
+
+		BOARD_UART_Print("\rKEYMODE: ");
+		if(key_mode == KEYMODE_OFF){
+			BOARD_UART_Println("Off");
+
+		}else if(key_mode == KEYMODE_ACCESSORIES){
+			BOARD_UART_Println("Auxillary");
+
+		}else if(key_mode == KEYMODE_CHARGE){
+			BOARD_UART_Println("Charge");
+
+		}else{
+			BOARD_UART_Println("Drive")
+		}
+
+		BOARD_UART_Print("\rDIRECTION: ");
+		if(dir == DRIVE_FORWARD){
+			BOARD_UART_Println("Forward");
+
+		}else{
+			BOARD_UART_Println("Reverse")
+		}
+		
+		BOARD_UART_Print("\rWIPERS: %s\n", (acc_in->wipers_on) ? "On" : "Off");			
+		BOARD_UART_Print("\rBRAKES: %s\n", (acc_in->brake_lights_on) ? "On" : "Off");	
+		
+		
+		BOARD_UART_Print("\rHEADLIGHTS: ");
+		if(headlights == HEADLIGHT_OFF){
+			BOARD_UART_Println("Off");
+
+		}else if (headlights == HEADLIGHT_ON){
+			BOARD_UART_Println("On")
+		}else{
+			BOARD_UART_Println("Highbeam")
+		}
+		
+		BOARD_UART_Print("\rTURNLIGHTS: ");
+		if(turnlights == BLINKER_OFF){
+			BOARD_UART_Println("Off\n");
+
+		}else if (headlights == LEFT_BLINKER){
+			BOARD_UART_Println("Left\n")
+		}else{
+			BOARD_UART_Println("Right\n")
+		}
 		
 		//Other Info
 		BOARD_UART_Println("\rOTHER INFO:")
-		BOARD_UART_Printf("\r\nVelocity: %d", (inp_messages->velocity);
-		BOARD_UART_Printf("\r\nPassed Init Tests?: %s\n", (inp_messages->init_test) ? "Yes" : "No");
-		// TODO print current input accessory requests
+		BOARD_UART_Print("\r\nVelocity: ");
+		BOARD_UART_PrintNum((inp_messages->velocity), 10, true);
+		BOARD_UART_Println();
+		BOARD_UART_Print("\r\nPassed Init Tests?: ");
+		BOARD_UART_Println((inp_messages->init_test) ? "Yes\n" : "No\n");
                 break;
+
             default:
                 Board_UART_Println("\r\nUnknown command!");
         }
