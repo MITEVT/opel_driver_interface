@@ -149,7 +149,7 @@ typedef struct {
 
 typedef struct {
     ACCESSORIES_OUTPUT_REQUEST_T *acc_output;
-    OUTPUT_MESSAGES *messages;
+    OUTPUT_MESSAGES_T *messages;
     bool close_contactors;
 } OUTPUT_T;
 
