@@ -4,6 +4,12 @@
 #include "stdint.h"
 #include "stdbool.h"
 
+typedef enum {
+    DRIVE_FORWARD = 0,
+    DRIVE_REVERSE = 1
+} DRIVE_DIRECTION_T;
+
+
 /************************************************
  *         TYPES DEFINING STATE                 *
  ***********************************************/
@@ -66,11 +72,6 @@ typedef enum {
     KEYMODE_CHARGE = 2, //Charge Mode
     KEYMODE_DRIVE = 3 //Drive Mode
 } KEYMODES_T;
-
-typedef enum {
-    DRIVE_FORWARD = 0,
-    DRIVE_REVERSE = 1
-} DRIVE_DIRECTION_T;
 
 typedef enum {
     HEADLIGHT_OFF = 0,
