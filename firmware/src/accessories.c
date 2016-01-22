@@ -35,6 +35,8 @@ ERROR_T Acc_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_
     } else if(mode_request == REQ_DRIVE) {
         output->close_contactors = true;
         output->acc_output = acc_out;
+ 		
+	OUTPUT_MESSAGES_T out_messages;
 
         if(input->direction == DRIVE_FORWARD) {
             out_messages.drive_mode = MESSAGE_DRIVE_FORWARD;
@@ -42,7 +44,6 @@ ERROR_T Acc_Step(INPUT_T *input, OUTPUT_T *output, STATE_T *state, MODE_REQUEST_
             out_messages.drive_mode = MESSAGE_DRIVE_REVERSE;
         }
 
-        OUTPUT_MESSAGES_T out_messages;
         out_messages.test = false;
         out_messages.send_heartbeat = true;
         output->messages = &out_messages;

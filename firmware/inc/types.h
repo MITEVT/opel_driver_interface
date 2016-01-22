@@ -19,6 +19,11 @@
  ***********************************************/
 
 typedef enum {
+    DRIVE_FORWARD = 0,
+    DRIVE_REVERSE = 1
+} DRIVE_DIRECTION;
+
+typedef enum {
     MODE_OFF = 1, 
     MODE_ACCESSORIES = 2, 
     MODE_CHARGE = 3, 
@@ -60,6 +65,8 @@ typedef struct {
 } HEARTBEAT_DATA;
 
 typedef struct {
+    MODE dsm_mode;
+    DRIVE_DIRECTION direction;
     MODE dsm_mode;
     HEARTBEAT_DATA *heartbeat_data;
 } STATE;
@@ -166,6 +173,8 @@ typedef struct {
 } OUTPUT_MESSAGES;
 
 typedef struct {
+    ACCESSORIES_OUTPUT_REQUEST *acc_output;
+    OUTPUT_MESSAGES *messages;
     ACCESSORIES_OUTPUT_REQUEST *acc_output;
     OUTPUT_MESSAGES *messages;
     bool close_contactors;
