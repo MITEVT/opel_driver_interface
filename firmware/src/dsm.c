@@ -10,9 +10,10 @@
 #include "shutdown.h"
 #include "init.h"
 
+// TODO: does time since heartbeat measure absolute or relative time
 ERROR_T check_heartbeat_validity(STATE_T *state) {
     // Check that the heartbeats in *state aren't stale
-    uint32_t heartbeat_time = state->heartbeat_data->time_since_BMS_heartbeat;
+    uint32_t bms_time = state->heartbeat_data->time_since_BMS_heartbeat;
     uint32_t throttle_time = state->heartbeat_data->time_since_BMS_heartbeat;
     uint32_t pdm_time = state->heartbeat_data->time_since_BMS_heartbeat;
     uint32_t velocity_time = state->heartbeat_data->time_since_BMS_heartbeat;

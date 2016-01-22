@@ -2,6 +2,7 @@
 #include "dsm.h"
 #include "di_util.h"
 #include "types.h"
+#include "frequencies.h"
 
 // -------------------------------------------------------------
 // Macro Definitions
@@ -23,12 +24,12 @@
 
 extern volatile uint32_t msTicks;
 
-static STATE_T *statep;
-static INPUT_T *inputp;
-static OUTPUT_T *outputp;
+static STATE *statep;
+static INPUT *inputp;
+static OUTPUT *outputp;
 
-// Listen to BMS, Velocity, Throttle, and PDM modules, respectively
-const static uint8_t INPUT_CAN_IDs = {0x600, 0x703, 0x700, 0x705};
+// Listen to BMS, Velocity 1, Velocity 2, Throttle, and PDM modules, respectively
+const static uint8_t INPUT_CAN_IDs = {0x600, 0x703, 0x704, 0x700, 0x550};
 const static uint8_t SIZE_INPUT_CAN_IDs = 4;
 
 static uint64_t last_heartbeat_time = 0;
@@ -129,102 +130,149 @@ void startup_routine(void) {
     statep = DSM_Init();
 }
 
-void process_UART_commands(void) {
+void process_UART_commands(INPUT_MESSAGES *input, STATE *state) {
     uint8_t count;
     if ((count = Board_UART_Read(uart_rx_buffer, BUF_SIZE)) != 0) {
         Board_UART_SendBlocking(uart_rx_buffer, count); // Echo user input
         switch (uart_rx_buffer[0]) {
+            // Get the stored current state
             case 's': 
-		MODE_T current_dsm_state = statep->dsm_mode;
-		if(current_dsm_state == MODE_OFF){
-		    BOARD_UART_Println("\r\nCar is in OFF state.");
-		}else if(current_dsm_state == MODE_ACCESSORIES) {
-		    BOARD_UART_Println("\r\nCar is in AUX state.");
-		}else if(current_dsm_state == MODE_CHARGE) {
-		    BOARD_UART_Println("\r\nCar is in Charge state.");
-		}else if(current_dsm_state == MODE_DRIVE) {
-		    BOARD_UART_Println("\r\nCar is in Drive state.");
-		}else if(current_dsm_state == MODE_INIT) {
-		    BOARD_UART_Println("\r\nCar is in Testing state.");
-		}else {
-		    BOARD_UART_Println("\r\nCar is in Shutdown state.");
-		}
+                MODE current_dsm_state = state->dsm_mode;
+
+                if(current_dsm_state == MODE_OFF) {
+                    BOARD_UART_Println("Car is in OFF state.");
+                } else if(current_dsm_state == MODE_ACCESSORIES) {
+                    BOARD_UART_Println("Car is in AUX state.");
+                } else if(current_dsm_state == MODE_CHARGE) {
+                    BOARD_UART_Println("Car is in Charge state.");
+                } else if(current_dsm_state == MODE_DRIVE) {
+                    BOARD_UART_Println("Car is in Drive state.");
+                } else if(current_dsm_state == MODE_INIT) {
+                    BOARD_UART_Println("Car is in Testing state.");
+                } else {
+                    BOARD_UART_Println("Car is in Shutdown state.");
+                }
                 break;
+
+            // Get saved heartbeat state data
+            case 'h':
+                HEARTBEAT_DATA *hb_data = state->heartbeat_data;
+                uint32_t bms_time = hb_data->time_since_BMS_heartbeat;
+                uint32_t throttle_time = hb_data->time_since_throttle_heartbeat;
+                bool brake_lights_on = hb_data->brake_lights_on;
+                uint32_t pdm_time = hb_data->time_since_PDM_heartbeat;
+                uint32_t velocity1_time = hb_data->time_since_velocity_heartbeat[0];
+                uint32_t velocity2_time = hb_data->time_since_velocity_heartbeat[1];
+                uint32_t velocity1_time = hb_data->time_since_velocity_heartbeat[0];
+                uint16_t (*velocities)[2] = hb_data->velocities_p;
+                bool (*PDM_results_p)[4] = hb_data->PDM_results;
+
+                Board_UART_Println("BMS Max Delay: ");
+                Board_UART_PrintNum(1000.0/BMS_HEARTBEAT_FREQUENCY, 10, true);
+                Board_UART_Println("BMS Current Delay: ");
+                Board_UART_PrintNum(bms_time, 10, true);
+
+                Board_UART_Println("Throttle Max Delay: ");
+                Board_UART_PrintNum(1000.0/THROTTLE_HEARTBEAT_FREQUENCY, 10, true);
+                Board_UART_Println("Throttle Current Delay: ");
+                Board_UART_PrintNum(throttle_time, 10, true);
+
+                Board_UART_Print("Brake lights status:")
+                if(brake_lights_on) {
+                    Board_UART_Println("On!");
+                } else {
+                    Board_UART_Println("Off!");
+                }
+
+                Board_UART_Println("PDM Max Delay: ");
+                Board_UART_PrintNum(1000.0/PDM_HEARTBEAT_FREQUENCY, 10, true);
+                Board_UART_Println("PDM Current Delay: ");
+                Board_UART_PrintNum(pdm_time, 10, true);
+
+                Board_UART_Println("PDM Test Results: ");
+                if(*PDM_results_p) {
+                    BOARD_UART_Print("True ");
+                } else {
+                    BOARD_UART_Print("False ");
+                }
+
+                if(*(PDM_results_p+1)) {
+                    BOARD_UART_Print("True ");
+                } else {
+                    BOARD_UART_Print("False ");
+                }
+
+                if(*(PDM_results_p+2)) {
+                    BOARD_UART_Print("True ");
+                } else {
+                    BOARD_UART_Print("False ");
+                }
+
+                if(*(PDM_results_p+3)) {
+                    BOARD_UART_Print("True ");
+                } else {
+                    BOARD_UART_Print("False ");
+                }
+
+                Board_UART_Println("Velocity Max Delay: ");
+                Board_UART_PrintNum(1000.0/VELOCITY_HEARTBEAT_FREQUENCY, 10, true);
+                Board_UART_Println("Velocity 1 Current Delay: ");
+                Board_UART_PrintNum(velocity1_time, 10, true);
+                Board_UART_Println("Velocity 2 Current Delay: ");
+                Board_UART_PrintNum(velocity2_time, 10, true);
+
+                break;
+
+            // Regurgitate current input data/requests
             case 'i':
-		INPUT_MESSAGES* inp_messages = inputp->messages;
-		KEYMODES_T key_mode = inputp->keymodes;
-		ACCESSORIES_INPUT_STATE_T* acc_in = inputp->acc_input;	
-		DRIVE_DIRECTION_T dir = inputp->direction;		
-		HEADLIGHT_STATE_T headlights = acc_in->headlight_switches;
-		TURN_BLINKER_T turnlights = acc_in->turn_blinker_switches;	
-	
-		//Heartbeats
-		BOARD_UART_Println("\rHEARTBEATS:\n");	
+                DRIVE_DIRECTION dd = input->direction;
+                Board_UART_Print("Drive Direction: ");
+                if(dd == DRIVE_FORWARD) {
+                    Board_UART_Println("Forward");
+                } else {
+                    Board_UART_Println("Reverse");
+                }
 
-		BOARD_UART_Print("\rBMS: ");
-		BOARD_UART_Println((inp_messages->BMS_heartbeat) ? "On" : "Off");
+                KEYMODES km = input->keymodes;
+                Board_UART_Print("Current input keymode: ");
+                if(km == KEYMODE_OFF) {
+                    Board_UART_Println("Off!");
+                } else if(km == KEYMODE_ACCESSORIES) {
+                    Board_UART_Println("Aux!");
+                } else if(km == KEYMODE_DRIVE) {
+                    Board_UART_Println("Drive!");
+                } else {
+                    Board_UART_Println("Charge!");
+                }
 
-		BOARD_UART_Print("\rPDM: ");
-		BOARD_UART_Println((inp_messages->PDM_heartbeat) ? "On" : "Off");
-		BOARD_UART_Print("\rThrottle: ");
-		BOARD_UART_Println((inp_messages->throttle_heartbeat) ? "On\n" : "Off\n");
+                bool wipers = input->acc_input->wipers;
+                Board_UART_Print("Wipers are ");
+                if(wipers) {
+                    Board_UART_Print("on!");
+                } else {
+                    Board_UART_Print("off!");
+                }
+
+                TURN_BLINKER tb = input->acc_input->wipers;
+                Board_UART_Print("Turn blinkers status: ");
+                if(tb == BLINKER_OFF) {
+                    Board_UART_Print("Off!");
+                } else if(tb == LEFT_BLINKER) {
+                    Board_UART_Print("LEFT ON!");
+                } else {
+                    Board_UART_Print("RIGHT ON!");
+                }
+
+                TURN_BLINKER tb = input->acc_input->wipers;
+                Board_UART_Print("Turn blinkers status: ");
+                if(headlights == HEADLIGHT_OFF) {
+                    BOARD_UART_Println("Off");
+                } else if (headlights == HEADLIGHT_ON) {
+                    BOARD_UART_Println("On")
+                } else {
+                    BOARD_UART_Println("Highbeam")
+                }
 		
-		//Accessory Inputs
-		BOARD_UART_Println("\rACCESSORY INPUTS:\n");
-
-		BOARD_UART_Print("\rKEYMODE: ");
-		if(key_mode == KEYMODE_OFF){
-			BOARD_UART_Println("Off");
-
-		}else if(key_mode == KEYMODE_ACCESSORIES){
-			BOARD_UART_Println("Auxillary");
-
-		}else if(key_mode == KEYMODE_CHARGE){
-			BOARD_UART_Println("Charge");
-
-		}else{
-			BOARD_UART_Println("Drive")
-		}
-
-		BOARD_UART_Print("\rDIRECTION: ");
-		if(dir == DRIVE_FORWARD){
-			BOARD_UART_Println("Forward");
-
-		}else{
-			BOARD_UART_Println("Reverse")
-		}
-		
-		BOARD_UART_Print("\rWIPERS: %s\n", (acc_in->wipers_on) ? "On" : "Off");			
-		BOARD_UART_Print("\rBRAKES: %s\n", (acc_in->brake_lights_on) ? "On" : "Off");	
-		
-		
-		BOARD_UART_Print("\rHEADLIGHTS: ");
-		if(headlights == HEADLIGHT_OFF){
-			BOARD_UART_Println("Off");
-
-		}else if (headlights == HEADLIGHT_ON){
-			BOARD_UART_Println("On")
-		}else{
-			BOARD_UART_Println("Highbeam")
-		}
-		
-		BOARD_UART_Print("\rTURNLIGHTS: ");
-		if(turnlights == BLINKER_OFF){
-			BOARD_UART_Println("Off\n");
-
-		}else if (headlights == LEFT_BLINKER){
-			BOARD_UART_Println("Left\n")
-		}else{
-			BOARD_UART_Println("Right\n")
-		}
-		
-		//Other Info
-		BOARD_UART_Println("\rOTHER INFO:")
-		BOARD_UART_Print("\r\nVelocity: ");
-		BOARD_UART_PrintNum((inp_messages->velocity), 10, true);
-		BOARD_UART_Println();
-		BOARD_UART_Print("\r\nPassed Init Tests?: ");
-		BOARD_UART_Println((inp_messages->init_test) ? "Yes\n" : "No\n");
                 break;
 
             default:
@@ -283,6 +331,12 @@ bool handle_error(ERROR_T error) {
     // TODO Process error appropriately, changing state if needed
     //      outputs True/False if should subsequently process_output_requests()
     //      should be called. Makes call to broadcast_error_message(...)
+    //
+    //      ERROR_LOST_BMS_HEARTBEAT
+    //      ERROR_LOST_THROTTLE_HEARTBEAT
+    //      ERROR_LOST_PDM_HEARTBEAT
+    //      ERROR_LOST_VELOCITY_HEARTBEAT
+    //
     return NULL;
 }
 

@@ -4,42 +4,65 @@
 #include "stdint.h"
 #include "stdbool.h"
 
+/*
+ * Modules:
+ *   - BMS
+ *   - Throttle
+ *   - Wheel Velocity (WV1 and WV2)
+ *   - User Interface (UI)
+ *   - Motor Interface (MI)
+ *   - Power Distribution Monitor (PDM)
+ */
+
 /************************************************
  *         TYPES DEFINING STATE                 *
  ***********************************************/
 
 typedef enum {
-    MODE_OFF = 1, //Off Mode
-    MODE_ACCESSORIES = 1, //Standby Mode
-    MODE_CHARGE = 2, //Charge Mode
-    MODE_DRIVE = 3, //Drive Mode
-    MODE_INIT = 4, //Initialization Mode
-    MODE_SHUTDOWN = 5, //Normal Shutdown
-} MODE_T;
-
-typedef enum {
-	INIT_OFF = 0, //OFF Mode
-	INIT_TESTING = 1, //Testing Mode
-	INIT_DONE = 2, //Tests Done
-	INIT_FAILED = 3
-} TEST_MODES_T;
+    MODE_OFF = 1, 
+    MODE_ACCESSORIES = 2, 
+    MODE_CHARGE = 3, 
+    MODE_DRIVE = 4, 
+    MODE_INIT = 5, 
+    MODE_SHUTDOWN = 6
+} MODE;
 
 typedef struct {
-    uint32_t time_since_BMS_heartbeat;
+    
+} BMS_STATUS;
+
+typedef struct {
+    uint16_t brake_value;
+    uint16_t throttle_value;
+} THROTTLE_STATUS;
+
+typedef struct {
+    bool low_voltage_status;
+    bool low_voltage_battery;
+    bool low_voltage_dcdc;
+    bool critical_systems_status;
+    bool critical_systems_battery;
+    bool critical_systems_dcdc;
+} PDM_STATUS;
+
+typedef struct {
+    uint32_t velocity;
+} WV_STATUS;
+
+typedef struct {
+    uint32_t time_since_bms_heartbeat;
+    uint32_t time_since_wv1_heartbeat;
+    uint32_t time_since_wv2_heartbeat;
     uint32_t time_since_throttle_heartbeat;
-    uint32_t time_since_PDM_heartbeat; //Power distribution module 
-    uint32_t time_since_velocity_heartbeat;
-    uint16_t velocity;
-    bool ignore_heartbeats;
+    uint32_t time_since_ui_heartbeat;
+    uint32_t time_since_mi_heartbeat;
+    uint32_t time_since_pdm_heartbeat;
 } HEARTBEAT_DATA;
 
 typedef struct {
-    MODE_T dsm_mode;
+    MODE dsm_mode;
     HEARTBEAT_DATA *heartbeat_data;
-    TEST_MODES_T testing_mode;
-    uint32_t time_since_test_start;
-    int counter; //0 if we started tests, 1 if we have. Used in checkTimeout in init.c
-} STATE_T;
+} STATE;
 
 
 /************************************************
@@ -53,7 +76,7 @@ typedef enum {
     REQ_DRIVE = 3, //Request to Drive
     REQ_INIT = 4, //Request to Initialize
     REQ_SHUTDOWN = 5 //Request to Shutdown
-} MODE_REQUEST_T;
+} MODE_REQUEST;
 
 /************************************************
  *              THE INPUT TYPES               *
@@ -64,46 +87,47 @@ typedef enum {
     KEYMODE_ACCESSORIES = 1, //Standby Mode 
     KEYMODE_CHARGE = 2, //Charge Mode
     KEYMODE_DRIVE = 3 //Drive Mode
-} KEYMODES_T;
+} KEYMODES;
 
 typedef enum {
     DRIVE_FORWARD = 0,
     DRIVE_REVERSE = 1
-} DRIVE_DIRECTION_T;
+} DRIVE_DIRECTION;
 
 typedef enum {
     HEADLIGHT_OFF = 0,
     HEADLIGHT_ON = 1,
     HIGHBEAM_ON = 2
-} HEADLIGHT_STATE_T;
+} HEADLIGHT_STATE;
 
 typedef enum {
     BLINKER_OFF = 0,
     LEFT_BLINKER = 1,
     RIGHT_BLINKER = 2
-} TURN_BLINKER_T;
+} TURN_BLINKER;
 
 typedef struct {
     bool wipers_on; //State of the wipers
-    HEADLIGHT_STATE_T headlight_switches; //State of headlights
-    TURN_BLINKER_T turn_blinker_switches; //State of turn blinkers
-    bool brake_lights_on; //State of brake lights
-} ACCESSORIES_INPUT_STATE_T;
+    HEADLIGHT_STATE headlight_switches; //State of headlights
+    TURN_BLINKER turn_blinker_switches; //State of turn blinkers
+} ACCESSORIES_INPUT_STATE;
 
 typedef struct {
-    bool BMS_heartbeat; //Battery 
-    bool PDM_heartbeat; //Power distribution heartbeat
+    bool bms_heartbeat; 
     bool throttle_heartbeat;
-    uint16_t velocity;
-    bool init_test; //Did we pass the init tests or not?
+    bool wv1_heartbeat;
+    bool wv2_heartbeat;
+    bool pdm_heartbeat; 
+    bool ui_heartbeat; 
+    bool mi_heartbeat; 
 } INPUT_MESSAGES;
 
 typedef struct {
-    ACCESSORIES_INPUT_STATE_T *acc_input;
-    KEYMODES_T keymodes;
-    DRIVE_DIRECTION_T direction; //Should only matter if keymode is drive
+    ACCESSORIES_INPUT_STATE *acc_input;
+    KEYMODES keymodes;
+    DRIVE_DIRECTION direction; //Should only matter if keymode is drive
     INPUT_MESSAGES *messages;
-} INPUT_T;
+} INPUT;
 
 /************************************************
  *              THE OUTPUT TYPES               *
@@ -111,18 +135,10 @@ typedef struct {
 
 typedef struct {
     bool wipers_on; //State of da wipers
-    HEADLIGHT_STATE_T headlight_state; //State of the headlights
-    TURN_BLINKER_T turn_blinker; //State of turn blinkers
+    HEADLIGHT_STATE headlight_state; //State of the headlights
+    TURN_BLINKER turn_blinker; //State of turn blinkers
     bool brake_lights_on; //State of brake lights
-} ACCESSORIES_OUTPUT_REQUEST_T;
-
-typedef enum {
-    MESSAGE_PARKED_AUX = 0,
-    MESSAGE_CHARGE = 1,
-    MESSAGE_DRIVE_FORWARD = 2,
-    MESSAGE_DRIVE_REVERSE = 3,
-    MESSAGE_SHUTDOWN_IMPENDING = 4
-} MESSAGE_DRIVE_MODE_T;
+} ACCESSORIES_OUTPUT_REQUEST;
 
 typedef enum {
     ERROR_NONE = 0,
@@ -136,20 +152,23 @@ typedef enum {
 
     ERROR_VELOCITY_NOT_ZERO = 6,
 
-    ERROR_TESTS_FAILED = 7
-} ERROR_T;
+    ERROR_VELOCITIES_NOT_EQUAL = 6,
+
+    ERROR_LVS_BATTERY_TEST_FAILED = 7
+    ERROR_LVS_DC_TEST_FAILED = 7
+    ERROR_CS_BATTERY_TEST_FAILED = 7
+    ERROR_CS_DC_TEST_FAILED = 7
+} ERROR;
 
 typedef struct {
     bool test; // Request hardware to send test module message to run tests
-    MESSAGE_DRIVE_MODE_T drive_mode; 
-    ERROR_T error; 
-    bool send_heartbeat; // Request hardware to send heartbeat with given data
-} OUTPUT_MESSAGES_T;
+    ERROR error; 
+} OUTPUT_MESSAGES;
 
 typedef struct {
-    ACCESSORIES_OUTPUT_REQUEST_T *acc_output;
+    ACCESSORIES_OUTPUT_REQUEST *acc_output;
     OUTPUT_MESSAGES *messages;
     bool close_contactors;
-} OUTPUT_T;
+} OUTPUT;
 
 #endif
