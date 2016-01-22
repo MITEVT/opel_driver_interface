@@ -6,14 +6,14 @@
 #include "types.h"
 
 // Returns heartbeat state object with values to 0.
-HEARTBEAT_DATA *initialize_heartbeat_data(void);
+void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data);
 
 // Process input messages to return updated heartbeat message state
-HEARTBEAT_DATA *process_input_message(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA *heartbeat_data, uint32_t msTicks);
+void process_input_message(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA *hb_data, uint32_t msTicks);
 
 // Converts the (requested) state of input accessories to a request for the corresponding hardware accessories state
-ACCESSORIES_OUTPUT_REQUEST_T *convert_acc(ACCESSORIES_INPUT_STATE_T *acc_in);
+void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OUTPUT_REQUEST *out_req);
 
 // Creates a hardware accessories request that turns off all accessories
-ACCESSORIES_OUTPUT_REQUEST_T *turn_all_off(void);
+void turn_all_off(ACCESSORIES_OUTPUT_REQUEST *out_req);
 #endif

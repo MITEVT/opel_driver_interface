@@ -67,7 +67,6 @@ typedef struct {
 typedef struct {
     MODE dsm_mode;
     DRIVE_DIRECTION direction;
-    MODE dsm_mode;
     HEARTBEAT_DATA *heartbeat_data;
 } STATE;
 
@@ -95,11 +94,6 @@ typedef enum {
     KEYMODE_CHARGE = 2, //Charge Mode
     KEYMODE_DRIVE = 3 //Drive Mode
 } KEYMODES;
-
-typedef enum {
-    DRIVE_FORWARD = 0,
-    DRIVE_REVERSE = 1
-} DRIVE_DIRECTION;
 
 typedef enum {
     HEADLIGHT_OFF = 0,
@@ -159,12 +153,12 @@ typedef enum {
 
     ERROR_VELOCITY_NOT_ZERO = 6,
 
-    ERROR_VELOCITIES_NOT_EQUAL = 6,
+    ERROR_VELOCITIES_NOT_EQUAL = 7,
 
-    ERROR_LVS_BATTERY_TEST_FAILED = 7
-    ERROR_LVS_DC_TEST_FAILED = 7
-    ERROR_CS_BATTERY_TEST_FAILED = 7
-    ERROR_CS_DC_TEST_FAILED = 7
+    ERROR_LVS_BATTERY_TEST_FAILED = 8,
+    ERROR_LVS_DC_TEST_FAILED = 9,
+    ERROR_CS_BATTERY_TEST_FAILED = 10,
+    ERROR_CS_DC_TEST_FAILED = 11
 } ERROR;
 
 typedef struct {
@@ -173,8 +167,6 @@ typedef struct {
 } OUTPUT_MESSAGES;
 
 typedef struct {
-    ACCESSORIES_OUTPUT_REQUEST *acc_output;
-    OUTPUT_MESSAGES *messages;
     ACCESSORIES_OUTPUT_REQUEST *acc_output;
     OUTPUT_MESSAGES *messages;
     bool close_contactors;
