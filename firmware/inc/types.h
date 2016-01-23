@@ -18,6 +18,18 @@
  *         TYPES DEFINING STATE                 *
  ***********************************************/
 
+typedef struct {
+    bool bms_heartbeat1; 
+    bool bms_heartbeat2; 
+    bool bms_heartbeat3; 
+    bool throttle_heartbeat;
+    bool wv1_heartbeat;
+    bool wv2_heartbeat;
+    bool pdm_heartbeat; 
+    bool ui_heartbeat; 
+    bool mi_heartbeat; 
+} RECIEVED_HEARTBEATS;
+
 typedef enum {
     DRIVE_FORWARD = 0,
     DRIVE_REVERSE = 1
@@ -33,8 +45,24 @@ typedef enum {
 } MODE;
 
 typedef struct {
-    
-} BMS_STATUS;
+    // Data in BMS Heartbeat 2
+    bool contactor_error[3]; // True=Error Present
+    bool contactor_output[3]; // True=Contactors Closed
+    uint8_t precharge_status;  // 0=Error, 1=Idle, 2=Measure, 3=Precharge, 4=Run
+} BMS_PRECHARGE_STATUS;
+
+typedef struct {
+    // Data in BMS Heartbeat 3
+    bool cells_over_voltage; 
+    bool cells_under_voltage; 
+    bool cells_over_temperature; 
+    bool measurement_untrusted;
+    bool cmu_comm_timeout;
+    bool vehicle_comm_timeout;
+    bool cmu_can_power_on;
+
+    bool bmu_setup_mode;
+} BMS_PACK_STATUS;
 
 typedef struct {
     uint16_t brake_value;
@@ -42,6 +70,7 @@ typedef struct {
 } THROTTLE_STATUS;
 
 typedef struct {
+    // True means 
     bool low_voltage_status;
     bool low_voltage_battery;
     bool low_voltage_dcdc;
@@ -55,19 +84,36 @@ typedef struct {
 } WV_STATUS;
 
 typedef struct {
-    uint32_t time_since_bms_heartbeat;
-    uint32_t time_since_wv1_heartbeat;
-    uint32_t time_since_wv2_heartbeat;
-    uint32_t time_since_throttle_heartbeat;
-    uint32_t time_since_ui_heartbeat;
-    uint32_t time_since_mi_heartbeat;
-    uint32_t time_since_pdm_heartbeat;
+    RECIEVED_HEARTBEATS *started_heartbeats;
+
+    // The main BMS heartbeat (if on or off)
+    uint32_t last_rcvd_bms_heartbeat1;
+    // The BMS heartbeats about Precharge Status/Contactors (0x6F7)
+    uint32_t last_rcvd_bms_heartbeat2;
+    // The BMS heartbeats about overall pack status/cell status (0x6FB)
+    uint32_t last_rcvd_bms_heartbeat3;
+
+    uint32_t last_rcvd_wv1_heartbeat;
+    uint32_t last_rcvd_wv2_heartbeat;
+    uint32_t last_rcvd_throttle_heartbeat;
+    uint32_t last_rcvd_ui_heartbeat;
+    uint32_t last_rcvd_mi_heartbeat;
+    uint32_t last_rcvd_pdm_heartbeat;
+
+    WV_STATUS *wv1_status;
+    WV_STATUS *wv2_status;
+    BMS_PACK_STATUS *bms_pack_status;
+    BMS_PRECHARGE_STATUS *bms_precharge_status;
+    THROTTLE_STATUS *throttle_status;
+    PDM_STATUS *pdm_status;
 } HEARTBEAT_DATA;
 
 typedef struct {
     MODE dsm_mode;
     DRIVE_DIRECTION direction;
     HEARTBEAT_DATA *heartbeat_data;
+    bool critical_systems_relay_on;
+    bool low_voltage_relay_on;
 } STATE;
 
 
@@ -96,6 +142,12 @@ typedef enum {
 } KEYMODES;
 
 typedef enum {
+    FORWARD = 0,
+    REVERSE = 1,
+    PARK = 3
+} DRIVE_CONTROL_LEVER;
+
+typedef enum {
     HEADLIGHT_OFF = 0,
     HEADLIGHT_ON = 1,
     HIGHBEAM_ON = 2
@@ -114,20 +166,21 @@ typedef struct {
 } ACCESSORIES_INPUT_STATE;
 
 typedef struct {
-    bool bms_heartbeat; 
-    bool throttle_heartbeat;
-    bool wv1_heartbeat;
-    bool wv2_heartbeat;
-    bool pdm_heartbeat; 
-    bool ui_heartbeat; 
-    bool mi_heartbeat; 
+    RECIEVED_HEARTBEATS *recieved_heartbeats;
+
+    WV_STATUS *wv1_status;
+    WV_STATUS *wv2_status;
+    BMS_PACK_STATUS *bms_pack_status;
+    BMS_PRECHARGE_STATUS *bms_precharge_status;
+    THROTTLE_STATUS *throttle_status;
+    PDM_STATUS *pdm_status;
 } INPUT_MESSAGES;
 
 typedef struct {
     ACCESSORIES_INPUT_STATE *acc_input;
     KEYMODES keymodes;
-    DRIVE_DIRECTION direction; //Should only matter if keymode is drive
     INPUT_MESSAGES *messages;
+    DRIVE_CONTROL_LEVER dcl;
 } INPUT;
 
 /************************************************
@@ -162,14 +215,14 @@ typedef enum {
 } ERROR;
 
 typedef struct {
-    bool test; // Request hardware to send test module message to run tests
     ERROR error; 
 } OUTPUT_MESSAGES;
 
 typedef struct {
     ACCESSORIES_OUTPUT_REQUEST *acc_output;
     OUTPUT_MESSAGES *messages;
-    bool close_contactors;
+    bool low_voltage_relay_on;
+    bool critical_systems_relay_on;
 } OUTPUT;
 
 #endif
