@@ -44,6 +44,8 @@ typedef enum {
     MODE_SHUTDOWN = 6
 } MODE;
 
+// TODO: need to add UI status; whether RPi is on or off; add to CAN spec as well
+
 typedef struct {
     // Data in BMS Heartbeat 2
     bool contactor_error[3]; // True=Error Present
@@ -112,6 +114,9 @@ typedef struct {
     MODE dsm_mode;
     DRIVE_DIRECTION direction;
     HEARTBEAT_DATA *heartbeat_data;
+    uint32_t time_started_init_tests_ms;
+    uint32_t time_started_close_contactors_request_ms;
+    uint32_t time_started_PDM_test_ms;
     bool critical_systems_relay_on;
     bool low_voltage_relay_on;
 } STATE;

@@ -4,6 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: Add documentation for all functions
+
+// TODO:
+// write initialize_state()
+
+/**
+ * Initializes the heartbeat data struct to sensible start values
+ * @param HEARTBEAT_DATA *hb_data pointer to an allocated heartbeat struct
+ * @return void
+ */
 void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) { 
     hb_data->started_heartbeats->bms_heartbeat1=false;
     hb_data->started_heartbeats->bms_heartbeat2=false;
