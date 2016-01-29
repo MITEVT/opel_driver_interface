@@ -1,22 +1,22 @@
 #include "types.h"
 #include "di_util.h"
+#include "init.h"
 
 static uint32_t threshold_wait_time_heartbeats_ms;
 static uint32_t threshold_wait_time_bms_ms;
 static uint32_t threshold_wait_time_pdm_ms;
 
-void Init_Config(Init_Config init_config) {
+void Init_Config(Init_Config_T init_config) {
     // TODO update 
 }
 
-void Init_Cleanup(STATE *state) {
+ERROR Init_Cleanup(STATE *state) {
     // TODO
 }
 
 ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST *mode_request, uint32_t msTicks) {
-    
     // If time_started_init_tests != 0
-    //      If complete (util function to make all heartbeat data is G)
+    //      If complete (util function to make all heartbeat data is G) and no errs
     //          Sending DI BMS key ignition to 'Start'
     //          If in INput we find BMS signaled that it closed contacts
     //              Close the critical systems relay
@@ -31,6 +31,8 @@ ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST *mode_r
     //          else:
     //              return ERROR_NONE // waiting
     //          MAKE SURE TO CLEANUP
+    //      elif all heartbeats present but theres errors:
+    //          return ERROR
     //      elif msTicks - time_started_init_tests > threshold_wait_time
     //          RETURN ERROR (main will handle error)
     //      else:
