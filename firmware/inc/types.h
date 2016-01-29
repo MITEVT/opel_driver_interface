@@ -1,3 +1,10 @@
+/**
+ * @file types.h
+ * @author Skanda Koppula and Bryson Galapon
+ * @date 28 January 2015
+ * @brief Defines globally used types
+ */
+
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
@@ -44,8 +51,6 @@ typedef enum {
     MODE_SHUTDOWN = 6
 } MODE;
 
-// TODO: need to add UI status; whether RPi is on or off; add to CAN spec as well
-
 typedef struct {
     // Data in BMS Heartbeat 2
     bool contactor_error[3]; // True=Error Present
@@ -86,6 +91,10 @@ typedef struct {
 } WV_STATUS;
 
 typedef struct {
+    bool rasp_pi_on;
+} UI_STATUS;
+
+typedef struct {
     RECIEVED_HEARTBEATS *started_heartbeats;
 
     // The main BMS heartbeat (if on or off)
@@ -104,6 +113,7 @@ typedef struct {
 
     WV_STATUS *wv1_status;
     WV_STATUS *wv2_status;
+    UI_STATUS *ui_status;
     BMS_PACK_STATUS *bms_pack_status;
     BMS_PRECHARGE_STATUS *bms_precharge_status;
     THROTTLE_STATUS *throttle_status;

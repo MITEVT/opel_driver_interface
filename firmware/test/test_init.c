@@ -124,12 +124,6 @@ TEST(Util_Test, test_InitStep) {
 	TEST_ASSERT_EQUAL_INT(7, state.time_started_close_contactors_request_ms);	
 
 //***Test to see if InitStep times out on the bms request***
-
-
-	
-		
-
-
 }
 
 
