@@ -8,8 +8,7 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
-#include "stdint.h"
-#include "stdbool.h"
+#include "chip.h"
 
 /*
  * Modules:
@@ -227,10 +226,10 @@ typedef enum {
     ERROR_LVS_DC_TEST_FAILED = 9,
     ERROR_CS_BATTERY_TEST_FAILED = 10,
     ERROR_CS_DC_TEST_FAILED = 11
-} ERROR;
+} DI_ERROR;
 
 typedef struct {
-    ERROR error; 
+    DI_ERROR error; 
 } OUTPUT_MESSAGES;
 
 typedef struct {

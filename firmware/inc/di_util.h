@@ -8,8 +8,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
-#include "stdint.h"
-#include "stdbool.h"
+#include "chip.h"
 #include "types.h"
 
 /*

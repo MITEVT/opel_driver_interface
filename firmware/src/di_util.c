@@ -1,8 +1,6 @@
 #include "types.h"
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include "chip.h"
+#include "string.h"
 
 // TODO: Add documentation for all functions
 
