@@ -63,6 +63,8 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->bms_pack_status->vehicle_comm_timeout = false;
     hb_data->bms_pack_status->cmu_can_power_on = false;
     hb_data->bms_pack_status->bmu_setup_mode = false;
+
+    hb_data->ui_status->rasp_pi_on = false;
 } 
 
 void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA *hb_data, uint32_t msTicks) {
