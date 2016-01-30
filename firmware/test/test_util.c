@@ -52,6 +52,7 @@ TEST(Util_Test, test_initialize_heartbeat_data) {
 	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_pdm_heartbeat);
 
     // TODO: Add asserts for module status structs contain False/0 (e.g. BMS_PRECHARGE_STATUS, WV_STATUS, etc.) in hb_data
+    // TODO Add asserts for UI status!
 }
 
 TEST(Util_Test, test_convert_acc) {

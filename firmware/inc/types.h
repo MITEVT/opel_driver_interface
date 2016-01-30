@@ -76,7 +76,7 @@ typedef struct {
 } THROTTLE_STATUS;
 
 typedef struct {
-    // True means 
+    // True means there is no problem!
     bool low_voltage_status;
     bool low_voltage_battery;
     bool low_voltage_dcdc;
@@ -217,20 +217,52 @@ typedef enum {
     ERROR_LOST_BMS_HEARTBEAT = 2,
     ERROR_LOST_THROTTLE_HEARTBEAT = 3,
     ERROR_LOST_PDM_HEARTBEAT = 4,
-    ERROR_LOST_VELOCITY_HEARTBEAT = 5,
+    ERROR_LOST_UI_HEARTBEAT = 5,
+    ERROR_LOST_MI_HEARTBEAT = 6,
+    ERROR_LOST_VELOCITY1_HEARTBEAT = 7,
+    ERROR_LOST_VELOCITY2_HEARTBEAT = 8,
 
-    ERROR_VELOCITY_NOT_ZERO = 6,
+    ERROR_VELOCITY_NOT_ZERO = 9,
 
-    ERROR_VELOCITIES_NOT_EQUAL = 7,
+    ERROR_VELOCITIES_NOT_EQUAL = 10,
 
-    ERROR_LVS_BATTERY_TEST_FAILED = 8,
-    ERROR_LVS_DC_TEST_FAILED = 9,
-    ERROR_CS_BATTERY_TEST_FAILED = 10,
-    ERROR_CS_DC_TEST_FAILED = 11
+    ERROR_LVS_BATTERY_TEST_FAILED = 11,
+    ERROR_LVS_DC_TEST_FAILED = 12,
+    ERROR_CS_BATTERY_TEST_FAILED = 13,
+    ERROR_CS_DC_TEST_FAILED = 14,
+
+    ERROR_INIT_UI_HEARTBEAT = 15,
+    ERROR_INIT_BMS_HEARTBEAT = 16,
+    ERROR_INIT_MI_HEARTBEAT = 17,
+    ERROR_INIT_THROTTLE_HEARTBEAT = 18,
+    ERROR_INIT_VELOCITY1_HEARTBEAT = 19,
+    ERROR_INIT_VELOCITY2_HEARTBEAT = 20,
+    ERROR_INIT_VELOCITY2_HEARTBEAT = 21,
 } DI_ERROR;
+
+typedef enum {
+    DI_RUN = 0,
+    DI_START = 1
+} DI_PACKET_IGNITION;
+
+typedef enum {
+    OUT_PARKED = 0,
+    OUT_FORWARD = 1,
+    OUT_REVERSE = 2,
+    OUT_SHUTDOWN_IMPENDING = 3,
+    OUT_INIT = 4,
+    OUT_CHARGE = 5,
+    OUT_OFF = 6
+} DI_PACKET_MODE;
+
+typedef struct {
+    DI_PACKET_IGNITION ignition;
+    DI_PACKET_MODE mode;
+} DI_PACKET;
 
 typedef struct {
     DI_ERROR error; 
+    DI_PACKET di_packet;
 } OUTPUT_MESSAGES;
 
 typedef struct {
