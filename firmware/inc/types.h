@@ -185,6 +185,7 @@ typedef struct {
     WV_STATUS *wv1_status;
     WV_STATUS *wv2_status;
     BMS_PACK_STATUS *bms_pack_status;
+    UI_STATUS *ui_status;
     BMS_PRECHARGE_STATUS *bms_precharge_status;
     THROTTLE_STATUS *throttle_status;
     PDM_STATUS *pdm_status;

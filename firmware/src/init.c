@@ -15,6 +15,9 @@ DI_ERROR Init_Cleanup(STATE *state) {
     // TODO
 }
 
+// 1. check if that all heartbeats are there
+// 2. check that there are no errors
+
 DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
 //    If time_started_init_tests != 0: // If we started tests at all
 //        If complete (util function to make all heartbeat data is G) and no errs
