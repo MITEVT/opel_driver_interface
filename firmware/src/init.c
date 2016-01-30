@@ -23,22 +23,17 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
     if(state->time_started_init_tests_ms != 0) {
         // We started tests for heartbeat existence and content
         
-        DI_ERROR hb_exists_error = all_hb_exist(state, msTicks);
+        
+        DI_ERROR hb_presence = all_hb_exist(state, msTicks);
         DI_ERROR hb_content_error = no_heartbeat_errors(state, msTicks);
-        if((hb_exists_error == ERROR_NONE) && (hb_content_error == ERROR_NONE)) {
-            output->messages->di_packet->ignition = DI_START:
-            if(state->time_started_close_contactors_request_ms != 0) {
-                // We already sent requested close contactors/precharge request
-                DI_ERROR bms_start_error = get_bms_error(state);
-                if(bms_start_error == ERROR_NONE) {
-                    
-                }
-            } else {
+        if((hb_presence == ERROR_NONE) && (hb_content_error == ERROR_NONE)) {
 
-            }
-        } else if((hb_content_error != ERROR_NONE)) {
+        } else if((hb_presence == ERROR_NONE) && (hb_content_error != ERROR_NONE)) {
+            return hb_content_error;
+        } else if(msTicks - 
 
         }
+
 //        elif all heartbeats present but theres errors:
 //            If UI failure: turn on LED?
 //            return SOME_HEARTBEAT_ERROR
