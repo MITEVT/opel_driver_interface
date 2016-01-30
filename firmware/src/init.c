@@ -18,20 +18,26 @@ ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_re
     // If time_started_init_tests != 0
     //      If complete (util function to make all heartbeat data is G) and no errs
     //          Sending DI BMS key ignition to 'Start'
-    //          If in INput we find BMS signaled that it closed contacts && time_started_close_contactors_request_ms != 0;
-    //              Close the critical systems relay
-    //                  If PDM data is OK && time_started_PDM_tests_ms != 0:
-    //                      Send DI heartbeat to park/forward/reverse
-    //                  elif msTicks - time_started_PDM_tests_ms:
-    //                      return ERROR
-    //                  else:
-    //			    time_started_PDM_tests_ms = msTicks;
-    //                      return ERROR_NONE  
-    //          elif msTicks - time_started_Close_Contactors_request_ms > threshold
-    //              return ERROR fuck
-    //          else:
-    //		    time_started_close_contactors_request_ms = msTicks;
-    //              return ERROR_NONE // waiting
+    //		If(time_started_close_contactors_request_ms != 0){
+    //              If in INput we find BMS signaled that it closed contacts0;
+    //                  Close the critical systems relay
+    //			If time_started_PDM_tests_ms != 0
+    //                      If PDM data is OK:
+    //                          Send DI heartbeat to park/forward/reverse
+    //                      elif msTicks - time_started_PDM_tests_ms:
+    //                          return ERROR
+    //                      else:
+    //                          return ERROR_NONE  
+    //  		else:
+    //			    time_started_PDM_tests_ms = msTicks
+    //              elif msTicks - time_started_Close_Contactors_request_ms > threshold
+    //                  return ERROR fuck
+    //              else:
+    //                  return ERROR_NONE // waiting
+
+    //		    }else{
+    //			    time_started_close_contactors_ms = msTicks;
+    //
     //          MAKE SURE TO CLEANUP
     //      elif all heartbeats present but theres errors:
     //          return ERROR
