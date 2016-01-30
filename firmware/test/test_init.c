@@ -117,13 +117,29 @@ TEST(Util_Test, test_InitStep) {
 //***Test to see if InitStep refreshes time_started_close_contactors_request_ms;
 
 	msTicks = 7;
-	threshold_wait_time_bms_ms = 100;
 
 	InitStep(&input, &state, &output, mode_request, msTicks);  
 
 	TEST_ASSERT_EQUAL_INT(7, state.time_started_close_contactors_request_ms);	
 
+//***Test to see if InitStep stays in init mode***
+
+	threshold_wait_time_bms_ms = 100;
+
+	for(int i = 0; i < 99; i++){
+		msTicks++;
+		InitStep(&input, &state, &output, mode_request, msTicks);
+	}
+
+    TEST_ASSERT_EQUAL_INT(MODE_INIT, state.dsm_mode);
+
 //***Test to see if InitStep times out on the bms request***
+    msTicks++;
+	//TODO: set first arg in following assert to the corresponding TIMEOUT ERROR for the init tests
+	TEST_ASSERT_EQUAL_INT(ERROR foo, InitStep(&input, &state, &output, mode_request, msTicks));
+
+
+
 }
 
 
