@@ -12,6 +12,21 @@
 #include "types.h"
 
 /*
+ *
+ *
+ */
+MODE_REQUEST get_mode_request(INPUT *input);
+
+/*
+ *  @details updates the state and DI packet output to reflect the mode request
+ *
+ *  @param mode_request the requested mode (usually based on toggle/key inputs)
+ *  @param state of state machine
+ *  @param output of state machine
+ */
+void change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request);
+
+/*
  * @details Returns a heartbeat state object with all recieved 
  * heartbeat status set to false; all other data set to 0 or false
  *

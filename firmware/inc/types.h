@@ -150,9 +150,8 @@ typedef enum {
 
 typedef enum {
     KEYMODE_OFF = 0, //Off Mode
-    KEYMODE_ACCESSORIES = 1, //Standby Mode 
-    KEYMODE_CHARGE = 2, //Charge Mode
-    KEYMODE_DRIVE = 3 //Drive Mode
+    KEYMODE_CHARGE = 1, //Charge Mode
+    KEYMODE_DRIVE = 2 //Drive Mode
 } KEYMODES;
 
 typedef enum {
@@ -237,9 +236,12 @@ typedef enum {
     ERROR_INIT_THROTTLE_HEARTBEAT = 18,
     ERROR_INIT_VELOCITY1_HEARTBEAT = 19,
     ERROR_INIT_VELOCITY2_HEARTBEAT = 20,
-    ERROR_INIT_PDM_HEARTBEAT = 20,
+    ERROR_INIT_PDM_HEARTBEAT = 21,
 
-    ERROR_INCONGRUOUS_HB_INIT_STATE = 22
+    ERROR_BMS_PRECHARGE_TIMEOUT = 22,
+    ERROR_PDM_TEST_TIMEOUT = 23,
+
+    ERROR_INCONSISTENT_MODE_REQUEST = 24,
 } DI_ERROR;
 
 typedef enum {

@@ -7,11 +7,51 @@
 // TODO:
 // write initialize_state()
 
-/**
- * Initializes the heartbeat data struct to sensible start values
- * @param HEARTBEAT_DATA *hb_data pointer to an allocated heartbeat struct
- * @return void
- */
+void change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request) {
+    if(mode_request == REQ_OFF) {
+        state->dsm_mode = MODE_SHUTDOWN;
+        output->messages->di_packet->mode = OUT_SHUTDOWN_IMPENDING;
+    } else if (mode_request == REQ_ACCESSORIES) {
+        state->dsm_mode = MODE_ACCESSORIES;
+        output->messages->di_packet->mode = OUT_PARKING;
+    } else if (mode_request == REQ_CHARGE) {
+        state->dsm_mode = MODE_CHARGE;
+        output->messages->di_packet->mode = OUT_CHARGE;
+    } else if (mode_request == REQ_DRIVE) {
+        if(input->dcl == FORWARD) {
+            output->messages->di_packet->mode = OUT_FORWARD;
+            state->dsm_mode = MODE_DRIVE;
+            state->direction = DRIVE_FORWARD;
+        } else if (input->dcl == REVERSE) {
+            output->messages->di_packet->mode = OUT_REVERSE;
+            state->dsm_mode = MODE_DRIVE;
+            state->direction = DRIVE_REVERSE;
+        } else {
+            return ERROR_INCONSISTENT_MODE_REQUEST;
+        }
+    } else if (mode_request == REQ_INIT) {
+        return ERROR_INCONSISTENT_MODE_REQUEST;
+    } else if (mode_request == REQ_SHUTDOWN) {
+        return ERROR_INCONSISTENT_MODE_REQUEST;
+    }
+}
+
+
+MODE_REQUEST get_mode_request(INPUT *input) {
+    if(input->keymodes == KEYMODE_OFF) {
+        return REQ_OFF;
+    } else if (input->keymodes == KEYMODE_CHARGE) {
+        return REQ_CHARGE;
+    } else { //Keymode Drive
+        if(input->dcl == PARK) {
+            return REQ_ACCESSORIES;
+        } else {
+            return REQ_DRIVE;
+        }
+    }
+}
+
+
 void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) { 
     hb_data->started_heartbeats->bms_heartbeat1=false;
     hb_data->started_heartbeats->bms_heartbeat2=false;

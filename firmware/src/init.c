@@ -7,12 +7,56 @@ static uint32_t threshold_wait_time_heartbeats_ms;
 static uint32_t threshold_wait_time_bms_ms;
 static uint32_t threshold_wait_time_pdm_ms;
 
-void Init_Config(Init_Config_T init_config) {
-    // TODO update 
+void Init_Config(Init_Config_T *init_config) {
+    threshold_wait_time_heartbeats_ms = init_config->threshold_wait_time_heartbeats_ms;
+    threshold_wait_time_bms_ms = init_config->threshold_wait_time_bms_ms;
+    threshold_wait_time_pdm_ms = init_config->threshold_wait_time_pdm_ms;
 }
 
-DI_ERROR Init_Cleanup(STATE *state) {
-    // TODO
+void Init_Cleanup(STATE *state) {
+    state->time_started_init_tests_ms = 0;
+    state->time_started_close_contactors_request_ms = 0;
+    state->time_started_PDM_tests_ms = 0;
+}
+
+DI_ERROR check_pdm(STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
+    if(time_started_PDM_tests_ms != 0) {
+        // To check if PDM results are OK; tests all heartbeats too!
+        DI_ERROR hb_content_error = no_heartbeat_errors(state, msTicks, false); 
+        
+        if(hb_content_error == ERROR_NONE) {
+            change_mode(mode_request, state, output);
+            return ERROR_NONE;
+        } else if (msTicks - time_started_PDM_tests_ms > threshold_wait_time_pdm_ms) {
+            return ERROR_PDM_TEST_TIMEOUT;
+        } else {
+            return ERROR_NONE:
+        }
+    } else {
+        output->critical_systems_relay_on = true;
+        time_started_PDM_tests_ms = msTicks;
+        return ERROR_NONE;
+    }
+}
+
+DI_ERROR check_precharge_and_pdm(STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
+    if(state->time_started_close_contactors_request_ms != 0) {
+        // We started BMS request to precharge/close contactors
+
+        DI_ERROR bms_precharge_status = check_bms_precharge(state);
+        if(bms_precharge_status == ERROR_NONE) {
+            return check_pdm(state, output, mode_request, msTicks);
+        } else if(msTicks - time_started_close_contactors_request_ms > threshold_wait_time_bms_ms) {
+            return ERROR_BMS_PRECHARGE_TIMEOUT;
+        } else {
+            return ERROR_NONE;
+        }
+    } else {
+        // We did not yet start BMS request to precharge
+        output->messages->di_packet->ignition = DI_START;
+        time_started_close_contactors_request_ms = msTicks;
+        return ERROR_NONE;
+    }
 }
 
 // 1. check if that all heartbeats are there
@@ -23,73 +67,24 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
     if(state->time_started_init_tests_ms != 0) {
         // We started tests for heartbeat existence and content
         
-        
         DI_ERROR hb_presence = all_hb_exist(state, msTicks);
-        DI_ERROR hb_content_error = no_heartbeat_errors(state, msTicks);
+        DI_ERROR hb_content_error = no_heartbeat_errors(state, msTicks, false);
         if((hb_presence == ERROR_NONE) && (hb_content_error == ERROR_NONE)) {
-
+            return check_precharge_and_pdm(state, output, mode_request, msTicks);
         } else if((hb_presence == ERROR_NONE) && (hb_content_error != ERROR_NONE)) {
             return hb_content_error;
-        } else if(msTicks - 
-
+        } else if(msTicks - state->time_started_init_tests_ms > threshold_wait_time_heartbeats_ms) {
+            return hb_presence;
+        } else {
+            return ERROR_NONE;
         }
-
-//        elif all heartbeats present but theres errors:
-//            If UI failure: turn on LED?
-//            return SOME_HEARTBEAT_ERROR
-//        elif msTicks - time_started_init_tests > threshold_wait_time
-//            If UI failure: turn on LED?
-//            RETURN HEARTBEAT_INIT_TIMEOUT_ERROR (main will handle error)
-//        else:
-//            return ERROR_NONE -> keep in Init_mode
     } else {
         // We haven't started tests for heartbeat existence
         
         output->low_voltage_relay_on = true;
-        output->messages->di_packet->ignition = DI_RUN:
+        output->messages->di_packet->ignition = DI_RUN;
         output->messages->di_packet->mode = OUT_INIT;
         state->time_started_init_tests_ms = msTicks;
         return ERROR_NONE;
     }
-//    If time_started_init_tests != 0: // If we started tests at all
-//        If complete (util function to make all heartbeat data is G) and no errs
-//            Sending DI BMS key ignition to 'Start'
-//            If(time_started_close_contactors_request_ms != 0): // We started contactors request
-//                If in INput we find BMS signaled that it closed contacts0;
-//                    Close the critical systems relay
-//                    If time_started_PDM_tests_ms != 0: // We started PDM request
-//                        If PDM data is OK:
-//                            Send DI heartbeat to park/forward/reverse
-//                            Change state to drive
-//                            MAKE SURE TO CLEANUP
-//                            return ERROR_NONE  
-//                        elif msTicks - time_started_PDM_tests_ms:
-//                            return ERROR
-//                        else:
-//                            return ERROR_NONE  
-//                    else:
-//                        time_started_PDM_tests_ms = msTicks
-//                        return ERROR_NONE -> keep in Init_mode
-//                elif msTicks - time_started_Close_Contactors_request_ms > threshold
-//                    return BMS_INIT_TIMEOUT_ERROR
-//                else:
-//                    return ERROR_NONE // waiting
-//
-//            else: // We did not start contactors request
-//                time_started_close_contactors_ms = msTicks;
-//                return ERROR_NONE -> keep in Init_mode
-//        elif all heartbeats present but theres errors:
-//            If UI failure: turn on LED?
-//            return SOME_HEARTBEAT_ERROR
-//        elif msTicks - time_started_init_tests > threshold_wait_time
-//            If UI failure: turn on LED?
-//            RETURN HEARTBEAT_INIT_TIMEOUT_ERROR (main will handle error)
-//        else:
-//            return ERROR_NONE -> keep in Init_mode
-//
-//    Else: // We haven't started the tests
-//        Close low voltage relay
-//        Start sending DI heartbeat BMS key ignition to 'Run' | what should be mode declared | maybe have init mode in can spec??
-//        time_started_init_tests = msTicks
-//        return ERROR_NONE -> keep in Init_mode
 }
