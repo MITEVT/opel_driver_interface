@@ -36,7 +36,9 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
             } else {
 
             }
-        } else if(
+        } else if((hb_content_error != ERROR_NONE)) {
+
+        }
 //        elif all heartbeats present but theres errors:
 //            If UI failure: turn on LED?
 //            return SOME_HEARTBEAT_ERROR
