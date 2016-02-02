@@ -1,49 +1,61 @@
 #include "types.h"
 #include "chip.h"
+#include "di_util.h"
 #include "string.h"
-
-// TODO: Add documentation for all functions
 
 // TODO:
 // write initialize_state()
 // write initialize_output()
 // write initialize_input()
 
-static uint32_t bms_hb1_threshold; 
-static uint32_t bms_hb2_threshold; 
-static uint32_t bms_hb3_threshold; 
-static uint32_t throttle_hb_threshold; 
-static uint32_t wv1_hb_threshold; 
-static uint32_t wv2_hb_threshold; 
-static uint32_t pdm_hb_threshold; 
-static uint32_t ui_hb_threshold; 
-static uint32_t mi_hb_threshold; 
+static uint32_t bms_hb1_threshold_ms; 
+static uint32_t bms_hb2_threshold_ms; 
+static uint32_t bms_hb3_threshold_ms; 
+static uint32_t throttle_hb_threshold_ms; 
+static uint32_t wv1_hb_threshold_ms; 
+static uint32_t wv2_hb_threshold_ms; 
+static uint32_t pdm_hb_threshold_ms; 
+static uint32_t ui_hb_threshold_ms; 
+static uint32_t mi_hb_threshold_ms; 
 
 
-void Util_Config(Util_Config_T util_config){
-    //TODO:
+void Util_Config(Util_Config_T *util_config){
+    bms_hb1_threshold_ms = util_config->bms_hb1_threshold_ms;
+    bms_hb2_threshold_ms = util_config->bms_hb2_threshold_ms;
+    bms_hb3_threshold_ms = util_config->bms_hb3_threshold_ms;
+    throttle_hb_threshold_ms = util_config->throttle_hb_threshold_ms;
+    wv1_hb_threshold_ms = util_config->wv1_hb_threshold_ms;
+    wv2_hb_threshold_ms = util_config->wv2_hb_threshold_ms;
+    pdm_hb_threshold_ms = util_config->pdm_hb_threshold_ms;
+    ui_hb_threshold_ms = util_config->ui_hb_threshold_ms;
+    mi_hb_threshold_ms = util_config->mi_hb_threshold_ms;
 }
 
 
-void change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request) {
+DI_ERROR change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request) {
     if(mode_request == REQ_OFF) {
         state->dsm_mode = MODE_SHUTDOWN;
         output->messages->di_packet->mode = OUT_SHUTDOWN_IMPENDING;
+        return ERROR_NONE;
     } else if (mode_request == REQ_ACCESSORIES) {
         state->dsm_mode = MODE_ACCESSORIES;
-        output->messages->di_packet->mode = OUT_PARKING;
+        output->messages->di_packet->mode = OUT_PARKED;
+        return ERROR_NONE;
     } else if (mode_request == REQ_CHARGE) {
         state->dsm_mode = MODE_CHARGE;
         output->messages->di_packet->mode = OUT_CHARGE;
+        return ERROR_NONE;
     } else if (mode_request == REQ_DRIVE) {
         if(input->dcl == FORWARD) {
             output->messages->di_packet->mode = OUT_FORWARD;
             state->dsm_mode = MODE_DRIVE;
             state->direction = DRIVE_FORWARD;
+            return ERROR_NONE;
         } else if (input->dcl == REVERSE) {
             output->messages->di_packet->mode = OUT_REVERSE;
             state->dsm_mode = MODE_DRIVE;
             state->direction = DRIVE_REVERSE;
+            return ERROR_NONE;
         } else {
             return ERROR_INCONSISTENT_MODE_REQUEST;
         }
@@ -119,7 +131,7 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->bms_pack_status->measurement_untrusted = false;
     hb_data->bms_pack_status->cmu_comm_timeout = false;
     hb_data->bms_pack_status->vehicle_comm_timeout = false;
-    hb_data->bms_pack_status->cmu_can_power_on = false;
+    hb_data->bms_pack_status->cmu_can_power_off = false;
     hb_data->bms_pack_status->bmu_setup_mode = false;
 
     hb_data->ui_status->rasp_pi_on = false;
@@ -203,25 +215,99 @@ void turn_all_acc_off(ACCESSORIES_OUTPUT_REQUEST *out_req) {
     out_req->headlight_state = HEADLIGHT_OFF;
 }
 
-DI_ERROR no_heartbeat_errors(INPUT *input *state){
+DI_ERROR check_bms_precharge(STATE *state) {
+   HEARTBEAT_DATA *hb_data = state->heartbeat_data;
+   BMS_PRECHARGE_STATUS *s = hb_data->bms_precharge_status;
+   if(s->contactor_error[0] || s->contactor_error[1] || s->contactor_error[2]) {
+       return ERROR_BMS_PRECHARGE;
+   } else if(s->precharge_status != 4) {
+       return ERROR_BMS_PRECHARGE;
+   }
 
-
+   if(s->contactor_output[0] && s->contactor_output[1] && s->contactor_output[2]) {
+        return ERROR_BMS_PRECHARGE;
+   } else {
+       return ERROR_NONE;
+   }
 }
 
-DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks){
-    RECIEVED_HEARTBEATS *started_hb = state->heartbeat_data->started_heartbeats;
+DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
+   HEARTBEAT_DATA *hb_data = state->heartbeat_data;
+   UI_STATUS *ui_status = hb_data->ui_status;
+   BMS_PACK_STATUS *bms_pack_status = hb_data->bms_pack_status;
+   PDM_STATUS *pdm_status = hb_data->pdm_status;
 
-    //Have we received all the heartbeats?
-    
-    bool rcvd_bms_hbs = (started_hb->bms_heartbeat1 && started_hb->bms_heartbeat2 && started_hb->bms_heartbeat);
-    bool rcvd_wv_hbs = (started_hb->wv1_heartbeat && started_hb->wv2_heartbeat);
-    bool rcvd_motor_hbs = (started_hb->throttle_heartbeat && started_hb->mi_heartbeat);
-    bool rcvd_rest_hbs = (started_hb->pdm_heartbeat && started_hb->ui_heartbeat);
+   // TODO add range checks on these values based on results of group meeting
+   // WV_STATUS *wv1_status = hb_data->wv1_status;
+   // WV_STATUS *wv2_status = hb_data->wv2_status;
+   // THROTTLE_STATUS *throttle_status = hb_data->throttle_status;
 
-    bool rcvd_all_hbs = (rcvd_bms_hbs && rcvd_wv_hbs && rcvd_motor_hbs && rcvd_rest_hbs);
-
-    HEARTBEAT_DATA *hb_data = state->heartbeat_hdata;
+   if(!ui_status->rasp_pi_on) {
+       return ERROR_INIT_UI_HEARTBEAT;
+   } else if(bms_pack_status->cells_over_voltage) {
+       return ERROR_CONTENT_BMS_OVER_VOLTAGE;
+   } else if(bms_pack_status->cells_under_voltage) {
+       return ERROR_CONTENT_BMS_UNDER_VOLTAGE;
+   } else if(bms_pack_status->cells_over_temperature) {
+        return ERROR_CONTENT_BMS_OVER_TEMP;
+   } else if(bms_pack_status->measurement_untrusted) {
+       return ERROR_CONTENT_BMS_MEASUREMENT_UNTRUSTED;
+   } else if(bms_pack_status->cmu_comm_timeout) {
+       return ERROR_CONTENT_BMS_CMU_COMM_TIMEOUT;
+   } else if(bms_pack_status->vehicle_comm_timeout) {
+       return ERROR_CONTENT_BMS_VEHICLE_COMM_TIMEOUT;
+   } else if(bms_pack_status->cmu_can_power_off) {
+       return ERROR_CONTENT_BMS_CAN_POWER;
+   } else if(pdm_status->low_voltage_status) {
+       if(pdm_status->low_voltage_dcdc) {
+           return ERROR_LVS_DC_TEST_FAILED;
+       } else {
+           return ERROR_LVS_BATTERY_TEST_FAILED;
+       }
+   } 
    
+   if(check_pdm_cs) {
+       if(pdm_status->critical_systems_status) {
+            if(pdm_status->critical_systems_dcdc) {
+                return ERROR_CS_DC_TEST_FAILED;
+            } else {
+                return ERROR_CS_BATTERY_TEST_FAILED;
+            }
+       }
+   }
+
+   return ERROR_NONE;
+}
+
+DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
+    HEARTBEAT_DATA *hb_data = state->heartbeat_data;
+    RECIEVED_HEARTBEATS *shb = hb_data->started_heartbeats;
+
+    // Have we received all the heartbeats?
+    bool bms_hbs = shb->bms_heartbeat1 && shb->bms_heartbeat2 && shb->bms_heartbeat;
+    bool wv1_hb = started_hb->wv1_heartbeat;
+    bool wv2_hb = started_hb->wv2_heartbeat;
+    bool throttle_hb = started_hb->throttle_heartbeat;
+    bool mi_hb = started_hb->mi_heartbeat;
+    bool pdm_hb = started_hb->pdm_heartbeat;
+    bool ui_hb = started_hb->ui_heartbeat;
+     
+    if(!bms_hbs) {
+        return ERROR_INIT_BMS_HEARTBEAT;
+    } else if (!wv1_hbs) {
+        return ERROR_INIT_VELOCITY1_HEARTBEAT;
+    } else if (!wv2_hb) {
+        return ERROR_INIT_VELOCITY2_HEARTBEAT;
+    } else if (!throttle_hb) {
+        return ERROR_INIT_THROTTLE_HEARTBEAT;
+    } else if (!mi_hb) {
+        return ERROR_INIT_MI_HEARTBEAT;
+    } else if (!ui_hb) {
+        return ERROR_INIT_UI_HEARTBEAT
+    } else if (!pdm_hb) {
+        return ERROR_INIT_PDM_HEARTBEAT;
+    }
+
     uint32_t last_bms1 = hb_data->last_rcvd_bms_heartbeat1;
     uint32_t last_bms2 = hb_data->last_rcvd_bms_heartbeat2;
     uint32_t last_bms3 = hb_data->last_rcvd_bms_heartbeat3;
@@ -232,42 +318,29 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks){
     uint32_t last_mi = hb_data->last_rcvd_mi_heartbeat;
     uint32_t last_pdm = hb_data->last_rcvd_pdm_heartbeat;
 
-    bool rcvd_wv1 = started_hb->wv1_heartbeat;
-    bool rcvd_mi = started_hb->mi_heartbeat;
-    bool rcvd_ui = started_hb->ui_heartbeat;
-    bool timeout_wv1 = (msTicks - last_wv1 > wv1_hb_threshold);
-    bool timeout_mi = (msTicks - last_mi > mi_hb_threshold);
-    bool timeout_ui = (msTicks - last_ui > ui_hb_threshold); 
+    bool timeout_wv1 = (msTicks - last_wv1 > wv1_hb_threshold_ms);
+    bool timeout_wv2 = (msTicks - last_wv2 > wv2_hb_threshold_ms);
+    bool timeout_mi = (msTicks - last_mi > mi_hb_threshold_ms);
+    bool timeout_ui = (msTicks - last_ui > ui_hb_threshold_ms); 
+    bool timeout_pdm = (msTicks - last_ui > ui_hb_threshold_ms); 
      
-    bool timeout_bms_hbs = (msTicks - last_bms1 > bms_hb1_threshold && msTicks - last_bms2 > bms_hb2_threshold && msTicks - last_bms3 > bms_hb3_threshold);
-    bool timeout_wv_hbs = (msTicks - last_wv1 > wv1_hb_threshold && msTicks - last_wv2 > wv2_hb_threshold);
-    bool timeout_motor_hbs = (msTicks - last_throt > throttle_hb_threshold && msTicks - last_mi > mi_hb_threshold);
-    bool timeout_rest_hbs = (msTicks - last_ui > ui_hb_threshold && msTicks - last_pdm > pdm_hb_threshold);
-
-    bool didnt_timeout = (!timeout_bms_hbs && !timeout_wv_hbs && !timeout_motor_hbs && !timeout_rest_hbs);
-
-    if(rcvd_all_hbs && didnt_timeout) {
-        return ERROR_NONE;
-
-    } else if(!rcvd_all_hbs) {
-        if(!rcvd_bms_hbs){
-            return ERROR_INIT_BMS_HEARTBEAT;
-        } else if(!rcvd_wv_hbs) {
-            return (!rdvd_wv1) ? ERROR_INIT_VELOCITY1_HEARTBEAT : ERROR_INIT_VELOCITY2_HEARTBEAT; 
-        } else if(!rcvd_motor_hbs) {
-            return (!rcvd_mi) ? ERROR_INIT_MI_HEARTBEAT : ERROR_INIT_THROTTLE_HEARTBEAT;
-        } else if(!rcvd_rest_hbs) {
-            return (!rcvd_ui) ? ERROR_INIT_UI_HEARTBEAT : ERROR_INIT_PDM_HEARTBEAT;
-        }
-    } else if(!didnt_timeout) {
-        if(timeout_bms_hbs){
-            return ERROR_LOST_BMS_HEARTBEAT;
-        } else if(timeout_wv_hbs) {
-            return (timeout_wv1) ? ERROR_LOST_VELOCITY1_HEARTBEAT : ERROR_LOST_VELOCITY2_HEARTBEAT;
-        } else if(timeout_motor_hbs) {
-            return (timeout_mi) ? ERROR_LOST_MI_HEARTBEAT : ERROR_LOST_THROTTLE_HEARTBEAT;
-        } else if(timeout_rest_hbs) {
-            return (timeout_ui) ? ERROR_LOST_UI_HEARTBEAT : ERROR_LOST_PDM_HEARTBEAT;
-        }
+    bool timeout_bms_hb1 = msTicks - last_bms1 > bms_hb1_threshold_ms;
+    bool timeout_bms_hb2 = msTicks - last_bms2 > bms_hb2_threshold_ms;
+    bool timeout_bms_hb3 = msTicks - last_bms3 > bms_hb3_threshold_ms;
+    
+    if(timeout_bms_hb1 || timeout_bms_hb2 || timeout_bms_hb3) {
+        return ERROR_LOST_BMS_HEARTBEAT;
+    } else if(timeout_wv1) {
+        return ERROR_LOST_VELOCITY1_HEARTBEAT;
+    } else if(timeout_wv2) {
+        return ERROR_LOST_VELOCITY2_HEARTBEAT;
+    } else if(timeout_mi) {
+        return ERROR_LOST_MI_HEARTBEAT;
+    } else if(timeout_ui) {
+        return ERROR_LOST_UI_HEARTBEAT;
+    } else if(timeout_pdm) {
+        return ERROR_LOST_PDM_HEARTBEAT;
     }
+    
+    return ERROR_NONE;
 } 

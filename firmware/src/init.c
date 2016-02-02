@@ -20,17 +20,20 @@ void Init_Cleanup(STATE *state) {
 }
 
 DI_ERROR check_pdm(STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
-    if(time_started_PDM_tests_ms != 0) {
+    uint32_t time_start_pdm = state->time_started_PDM_tests_ms;
+    if(time_start_pdm != 0) {
         // To check if PDM results are OK; tests all heartbeats too!
-        DI_ERROR hb_content_error = no_heartbeat_errors(state, msTicks, false); 
+        DI_ERROR hb_content_error = no_heartbeat_errors(state, msTicks, true); 
         
         if(hb_content_error == ERROR_NONE) {
-            change_mode(mode_request, state, output);
-            return ERROR_NONE;
-        } else if (msTicks - time_started_PDM_tests_ms > threshold_wait_time_pdm_ms) {
+            return change_mode(mode_request, state, output);
+
+        } else if (time_start_pdm > threshold_wait_time_pdm_ms) {
             return ERROR_PDM_TEST_TIMEOUT;
+
         } else {
             return ERROR_NONE:
+
         }
     } else {
         output->critical_systems_relay_on = true;
@@ -40,17 +43,21 @@ DI_ERROR check_pdm(STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint
 }
 
 DI_ERROR check_precharge_and_pdm(STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
-    if(state->time_started_close_contactors_request_ms != 0) {
-        // We started BMS request to precharge/close contactors
+    uint32_t tscc = state->time_started_close_contactors_request_ms;
 
+    if(tscc != 0) {
+        // We started BMS request to precharge/close contactors
         DI_ERROR bms_precharge_status = check_bms_precharge(state);
         if(bms_precharge_status == ERROR_NONE) {
             return check_pdm(state, output, mode_request, msTicks);
-        } else if(msTicks - time_started_close_contactors_request_ms > threshold_wait_time_bms_ms) {
+
+        } else if(msTicks - tscc > threshold_wait_time_bms_ms) {
             return ERROR_BMS_PRECHARGE_TIMEOUT;
+
         } else {
             return ERROR_NONE;
         }
+
     } else {
         // We did not yet start BMS request to precharge
         output->messages->di_packet->ignition = DI_START;
@@ -59,28 +66,29 @@ DI_ERROR check_precharge_and_pdm(STATE *state, OUTPUT *output, MODE_REQUEST mode
     }
 }
 
-// 1. check if that all heartbeats are there
-// 2. check that there are no errors
-// 3. get BMS precharge status and no BMS errors
-
 DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
-    if(state->time_started_init_tests_ms != 0) {
+    uint32_t init_test_time = state->time_started_init_tests_ms;
+
+    if(init_test_time != 0) {
         // We started tests for heartbeat existence and content
         
         DI_ERROR hb_presence = all_hb_exist(state, msTicks);
         DI_ERROR hb_content_error = no_heartbeat_errors(state, msTicks, false);
         if((hb_presence == ERROR_NONE) && (hb_content_error == ERROR_NONE)) {
             return check_precharge_and_pdm(state, output, mode_request, msTicks);
+
         } else if((hb_presence == ERROR_NONE) && (hb_content_error != ERROR_NONE)) {
             return hb_content_error;
-        } else if(msTicks - state->time_started_init_tests_ms > threshold_wait_time_heartbeats_ms) {
+
+        } else if(msTicks - init_test_time > threshold_wait_time_heartbeats_ms) {
             return hb_presence;
+
         } else {
             return ERROR_NONE;
         }
+
     } else {
         // We haven't started tests for heartbeat existence
-        
         output->low_voltage_relay_on = true;
         output->messages->di_packet->ignition = DI_RUN;
         output->messages->di_packet->mode = OUT_INIT;

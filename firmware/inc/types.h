@@ -65,12 +65,15 @@ typedef struct {
     bool measurement_untrusted;
     bool cmu_comm_timeout;
     bool vehicle_comm_timeout;
-    bool cmu_can_power_on;
+    bool cmu_can_power_off;
+    // make sure to invert the boolean of what BMS sent
+    // if true, there is an ERROR!
 
     bool bmu_setup_mode;
 } BMS_PACK_STATUS;
 
 typedef struct {
+    // TODO: add units to this, include documentation on valid range of values
     uint16_t brake_value;
     uint16_t throttle_value;
 } THROTTLE_STATUS;
@@ -86,7 +89,8 @@ typedef struct {
 } PDM_STATUS;
 
 typedef struct {
-    uint32_t velocity;
+    // TODO: add units to this, include documentation on valid range of values
+    uint32_t velocity; 
 } WV_STATUS;
 
 typedef struct {
@@ -242,6 +246,24 @@ typedef enum {
     ERROR_PDM_TEST_TIMEOUT = 23,
 
     ERROR_INCONSISTENT_MODE_REQUEST = 24,
+
+    ERROR_CONTENT_UI_HEARTBEAT = 25,
+    ERROR_CONTENT_BMS_OVER_VOLTAGE = 26, // see more bms errors below
+    ERROR_CONTENT_MI_HEARTBEAT = 27,
+    ERROR_CONTENT_THROTTLE_HEARTBEAT = 28,
+    ERROR_CONTENT_VELOCITY1_HEARTBEAT = 29,
+    ERROR_CONTENT_VELOCITY2_HEARTBEAT = 30,
+    ERROR_CONTENT_PDM_HEARTBEAT = 31,
+
+    ERROR_CONTENT_BMS_UNDER_VOLTAGE = 32,
+    ERROR_CONTENT_BMS_OVER_TEMP = 33,
+    ERROR_CONTENT_BMS_MEASUREMENT_UNTRUSTED = 34,
+    ERROR_CONTENT_BMS_CMU_COMM_TIMEOUT = 35,
+    ERROR_CONTENT_BMS_VEHICLE_COMM_TIMEOUT = 36,
+    ERROR_CONTENT_BMS_CAN_POWER = 37,
+
+    ERROR_BMS_PRECHARGE = 38
+
 } DI_ERROR;
 
 typedef enum {
@@ -266,7 +288,7 @@ typedef struct {
 
 typedef struct {
     DI_ERROR error; 
-    DI_PACKET di_packet;
+    DI_PACKET *di_packet;
 } OUTPUT_MESSAGES;
 
 typedef struct {
