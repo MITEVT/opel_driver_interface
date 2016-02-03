@@ -10,7 +10,7 @@
 
 #include "chip.h"
 
-/*
+/**
  * Modules:
  *   - BMS
  *   - Throttle

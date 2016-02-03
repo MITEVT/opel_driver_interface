@@ -26,6 +26,7 @@ DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
         DI_ERROR hb_content_error = no_heartbeat_error(state, msTicks, true); 
         
         if(hb_content_error == ERROR_NONE) {
+            Init_Cleanup(state);
             return change_mode(input, state, output, mode_request);
 
         } else if (time_start_pdm > threshold_wait_time_pdm_ms) {

@@ -23,7 +23,7 @@ typedef struct {
     uint32_t mi_hb_threshold_ms; 
 } Util_Config_T;
 
-/*
+/**
  * @details Checks to make sure precharge status is finished, error free, and contactors are closed
  *
  * @param state the state of state machine
@@ -31,7 +31,7 @@ typedef struct {
  */
 DI_ERROR check_bms_precharge(STATE *state);
 
-/*
+/**
  * @details Checks whether a heartbeat has been recieved from each of the modules (values held in state). Only checks PDM heartbeat if check_pdm is true
  *
  * @param state state of the state machine
@@ -42,7 +42,7 @@ DI_ERROR check_bms_precharge(STATE *state);
 DI_ERROR no_heartbeat_error(STATE *state, uint32_t msTicks, bool check_pdm_cs);
 
 
-/*
+/**
  * @details Checks whether a heartbeat has been recieved from each of the modules (values held in state). Only checks PDM heartbeat if check_pdm is true
  *
  * @param state state of the state machine
@@ -51,7 +51,7 @@ DI_ERROR no_heartbeat_error(STATE *state, uint32_t msTicks, bool check_pdm_cs);
  */
 DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks);
 
-/*
+/**
  * @details Converts the input toggle requests to the correct MODE_REQUEST. 
  *
  * @param input the input struct 
@@ -59,7 +59,7 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks);
  */
 MODE_REQUEST get_mode_request(INPUT *input);
 
-/*
+/**
  *  @details updates the state and DI packet output to reflect the mode request
  *
  *  @param mode_request the requested mode (usually based on toggle/key inputs)
@@ -69,7 +69,7 @@ MODE_REQUEST get_mode_request(INPUT *input);
  */
 DI_ERROR change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request);
 
-/*
+/**
  * @details Returns a heartbeat state object with all recieved 
  * heartbeat status set to false; all other data set to 0 or false
  *
@@ -77,7 +77,7 @@ DI_ERROR change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mo
  */
 void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data);
 
-/*
+/**
  * @details Converts the (requested) state of input accessories 
  * to a request for the corresponding hardware accessories state
  *
@@ -87,7 +87,7 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data);
  */
 void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OUTPUT_REQUEST *out_req);
 
-/*
+/**
  * @details Creates a hardware accessories request that turns off all accessories
  *
  * @param out_req struct with output hardware requests to be populated by function

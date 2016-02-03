@@ -1,8 +1,8 @@
 /**
- * @file di_util.h
+ * @file init.h
  * @author Skanda Koppula and Bryson Galapon
  * @date 28 January 2016
- * @brief Defines driver interface utility function
+ * @brief Defines driver interface init state/procedure
  */
 
 #ifndef _INIT_H_
@@ -34,7 +34,7 @@ void Init_Config(Init_Config_T *init_config);
  * @details tears down any state that the initialization sub-machine used
  * (e.g. start wait times for tests)
  */
-DI_ERROR INIT_Cleanup(STATE *state);
+void Init_Cleanup(STATE *state);
 
 /**
  * @details executes the magic of the initialization procedure
