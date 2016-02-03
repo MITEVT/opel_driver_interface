@@ -27,7 +27,7 @@ typedef struct {
  * @param init_config config struct that has the state machine 
  * config constants
  */
-void Init_Config(Init_Config_T init_config);
+void Init_Config(Init_Config_T *init_config);
 
 
 /**

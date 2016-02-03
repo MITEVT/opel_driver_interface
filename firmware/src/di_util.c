@@ -63,6 +63,8 @@ DI_ERROR change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mo
         return ERROR_INCONSISTENT_MODE_REQUEST;
     } else if (mode_request == REQ_SHUTDOWN) {
         return ERROR_INCONSISTENT_MODE_REQUEST;
+    } else {
+        return ERROR_INCONSISTENT_MODE_REQUEST;
     }
 }
 
@@ -281,20 +283,20 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
 
 DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     HEARTBEAT_DATA *hb_data = state->heartbeat_data;
-    RECIEVED_HEARTBEATS *shb = hb_data->started_heartbeats;
+    RECIEVED_HEARTBEATS *sh = hb_data->started_heartbeats;
 
     // Have we received all the heartbeats?
-    bool bms_hbs = shb->bms_heartbeat1 && shb->bms_heartbeat2 && shb->bms_heartbeat;
-    bool wv1_hb = started_hb->wv1_heartbeat;
-    bool wv2_hb = started_hb->wv2_heartbeat;
-    bool throttle_hb = started_hb->throttle_heartbeat;
-    bool mi_hb = started_hb->mi_heartbeat;
-    bool pdm_hb = started_hb->pdm_heartbeat;
-    bool ui_hb = started_hb->ui_heartbeat;
+    bool bms_hbs = sh->bms_heartbeat1 && sh->bms_heartbeat2 && sh->bms_heartbeat3;
+    bool wv1_hb = sh->wv1_heartbeat;
+    bool wv2_hb = sh->wv2_heartbeat;
+    bool throttle_hb = sh->throttle_heartbeat;
+    bool mi_hb = sh->mi_heartbeat;
+    bool pdm_hb = sh->pdm_heartbeat;
+    bool ui_hb = sh->ui_heartbeat;
      
     if(!bms_hbs) {
         return ERROR_INIT_BMS_HEARTBEAT;
-    } else if (!wv1_hbs) {
+    } else if (!wv1_hb) {
         return ERROR_INIT_VELOCITY1_HEARTBEAT;
     } else if (!wv2_hb) {
         return ERROR_INIT_VELOCITY2_HEARTBEAT;
@@ -303,7 +305,7 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     } else if (!mi_hb) {
         return ERROR_INIT_MI_HEARTBEAT;
     } else if (!ui_hb) {
-        return ERROR_INIT_UI_HEARTBEAT
+        return ERROR_INIT_UI_HEARTBEAT;
     } else if (!pdm_hb) {
         return ERROR_INIT_PDM_HEARTBEAT;
     }
@@ -313,7 +315,7 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     uint32_t last_bms3 = hb_data->last_rcvd_bms_heartbeat3;
     uint32_t last_wv1 = hb_data->last_rcvd_wv1_heartbeat;
     uint32_t last_wv2 = hb_data->last_rcvd_wv2_heartbeat;
-    uint32_t last_throt = hb_data->last_rcvd_throttle_heartbeat;
+    uint32_t last_throttle = hb_data->last_rcvd_throttle_heartbeat;
     uint32_t last_ui = hb_data->last_rcvd_ui_heartbeat;
     uint32_t last_mi = hb_data->last_rcvd_mi_heartbeat;
     uint32_t last_pdm = hb_data->last_rcvd_pdm_heartbeat;
@@ -322,7 +324,8 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     bool timeout_wv2 = (msTicks - last_wv2 > wv2_hb_threshold_ms);
     bool timeout_mi = (msTicks - last_mi > mi_hb_threshold_ms);
     bool timeout_ui = (msTicks - last_ui > ui_hb_threshold_ms); 
-    bool timeout_pdm = (msTicks - last_ui > ui_hb_threshold_ms); 
+    bool timeout_throttle = (msTicks - last_throttle > throttle_hb_threshold_ms); 
+    bool timeout_pdm = (msTicks - last_pdm > pdm_hb_threshold_ms); 
      
     bool timeout_bms_hb1 = msTicks - last_bms1 > bms_hb1_threshold_ms;
     bool timeout_bms_hb2 = msTicks - last_bms2 > bms_hb2_threshold_ms;
@@ -338,6 +341,8 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
         return ERROR_LOST_MI_HEARTBEAT;
     } else if(timeout_ui) {
         return ERROR_LOST_UI_HEARTBEAT;
+    } else if(timeout_throttle) {
+        return ERROR_LOST_THROTTLE_HEARTBEAT;
     } else if(timeout_pdm) {
         return ERROR_LOST_PDM_HEARTBEAT;
     }
