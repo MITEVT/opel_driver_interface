@@ -15,7 +15,7 @@ static uint32_t mi_hb_threshold_ms;
 
 void initialize_state(STATE *state){
     state->dsm_mode = MODE_OFF;
-    state->direction = DRIVE_FORWARD;
+    state->direction = DRIVE_NEUTRAL;
     
     HEARTBEAT_DATA *hb_data = state->heartbeat_data;
     initialize_heartbeat_data(hb_data);
