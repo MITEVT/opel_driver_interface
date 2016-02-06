@@ -32,7 +32,7 @@ typedef struct {
 DI_ERROR check_bms_precharge(STATE *state);
 
 /**
- * @details Checks whether a heartbeat has been recieved from each of the modules (values held in state). Only checks PDM heartbeat if check_pdm is true
+ * @details Checks the content of the heartbeat messages to ensure that the parameter values are safe
  *
  * @param state state of the state machine
  * @param msTicks time as per on board oscillator on chip
@@ -43,7 +43,7 @@ DI_ERROR no_heartbeat_error(STATE *state, uint32_t msTicks, bool check_pdm_cs);
 
 
 /**
- * @details Checks whether a heartbeat has been recieved from each of the modules (values held in state). Only checks PDM heartbeat if check_pdm is true
+ * @details Checks whether a heartbeat has been recieved from each of the modules (values held in state) and checks to see if any heartbeat has timed out. 
  *
  * @param state state of the state machine
  * @param msTicks time as per on board oscillator on chip
