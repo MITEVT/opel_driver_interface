@@ -38,7 +38,8 @@ typedef struct {
 
 typedef enum {
     DRIVE_FORWARD = 0,
-    DRIVE_REVERSE = 1
+    DRIVE_REVERSE = 1,
+    DRIVE_NEUTRAL = 2
 } DRIVE_DIRECTION;
 
 typedef enum {
