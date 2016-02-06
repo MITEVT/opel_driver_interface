@@ -37,6 +37,36 @@ void Init_Config(Init_Config_T *init_config);
 void Init_Cleanup(STATE *state);
 
 /**
+ *  @details checks the content and existence of PDM heartbeat. If no error,
+ *           changes mode to requested mode. Also closes CS relay on first
+ *           pdm_test attempt
+ * 
+ *  @param mode_request the requested mode (usually based on toggle/key inputs)
+ *  @param input of state machine
+ *  @param state of state machine
+ *  @param output of state machine
+ *  @param msTicks current time as per chip.h
+ *  @return any errors trying to change mode
+ */
+
+DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks);
+
+/**
+ *  @details checks BMS status on precharge and closing the contactors. 
+ *           if no errors with BMS status, checks PDM data through check_pdm func.
+ * 
+ *  @param mode_request the requested mode (usually based on toggle/key inputs)
+ *  @param input of state machine
+ *  @param state of state machine
+ *  @param output of state machine
+ *  @param msTicks current time as per chip.h
+ *  @return any errors on precharge/pdm errors
+ */
+
+DI_ERROR check_precharge_and_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks);
+
+
+/**
  * @details executes the magic of the initialization procedure
  * see the PDF in the opel_driver_interface repository /docs folder
  * for pseudocode outline
