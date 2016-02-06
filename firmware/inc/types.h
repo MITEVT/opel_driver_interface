@@ -268,7 +268,8 @@ typedef enum {
 
 typedef enum {
     DI_RUN = 0,
-    DI_START = 1
+    DI_START = 1,
+    DI_NONE = 2
 } DI_PACKET_IGNITION;
 
 typedef enum {
