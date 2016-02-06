@@ -73,7 +73,7 @@ typedef struct {
 } BMS_PACK_STATUS;
 
 typedef struct {
-    // TODO: add units to this, include documentation on valid range of values
+    // Values are from 0 to 920 
     uint16_t brake_value;
     uint16_t throttle_value;
 } THROTTLE_STATUS;
@@ -89,13 +89,18 @@ typedef struct {
 } PDM_STATUS;
 
 typedef struct {
-    // TODO: add units to this, include documentation on valid range of values
+    // Can be from 0 to 1700 rpm
+    // TODO change name to velocity_rpm
     uint32_t velocity; 
 } WV_STATUS;
 
 typedef struct {
     bool rasp_pi_on;
 } UI_STATUS;
+
+typedef struct {
+    bool shutdown_okay;
+} MI_STATUS;
 
 typedef struct {
     RECIEVED_HEARTBEATS *started_heartbeats;
@@ -117,6 +122,7 @@ typedef struct {
     WV_STATUS *wv1_status;
     WV_STATUS *wv2_status;
     UI_STATUS *ui_status;
+    MI_STATUS *mi_status;
     BMS_PACK_STATUS *bms_pack_status;
     BMS_PRECHARGE_STATUS *bms_precharge_status;
     THROTTLE_STATUS *throttle_status;
@@ -127,9 +133,15 @@ typedef struct {
     MODE dsm_mode;
     DRIVE_DIRECTION direction;
     HEARTBEAT_DATA *heartbeat_data;
+
     uint32_t time_started_init_tests_ms;
     uint32_t time_started_close_contactors_request_ms;
     uint32_t time_started_PDM_test_ms;
+
+    uint32_t time_started_module_shutdown_ms;
+    uint32_t time_started_velocity_zero_ms;
+    uint32_t time_started_open_contactors_ms;
+
     bool critical_systems_relay_on;
     bool low_voltage_relay_on;
 } STATE;
@@ -189,6 +201,7 @@ typedef struct {
     WV_STATUS *wv2_status;
     BMS_PACK_STATUS *bms_pack_status;
     UI_STATUS *ui_status;
+    MI_STATUS *mi_status;
     BMS_PRECHARGE_STATUS *bms_precharge_status;
     THROTTLE_STATUS *throttle_status;
     PDM_STATUS *pdm_status;
@@ -262,13 +275,18 @@ typedef enum {
     ERROR_CONTENT_BMS_VEHICLE_COMM_TIMEOUT = 36,
     ERROR_CONTENT_BMS_CAN_POWER = 37,
 
-    ERROR_BMS_PRECHARGE = 38
+    ERROR_BMS_PRECHARGE = 38,
+
+    ERROR_UI_SHUTDOWN = 39,
+    ERROR_MI_SHUTDOWN = 40,
+
+    ERROR_OPEN_CONTACTOR = 41
 
 } DI_ERROR;
 
 typedef enum {
-    DI_RUN = 0,
-    DI_START = 1
+    DI_RUN = 0, // Turn on
+    DI_START = 1 // Start contactors
 } DI_PACKET_IGNITION;
 
 typedef enum {
@@ -289,6 +307,7 @@ typedef struct {
 typedef struct {
     DI_ERROR error; 
     DI_PACKET *di_packet;
+    bool shutdown_vel_zero_req;
 } OUTPUT_MESSAGES;
 
 typedef struct {

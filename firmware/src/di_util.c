@@ -17,7 +17,7 @@ static uint32_t wv2_hb_threshold_ms;
 static uint32_t pdm_hb_threshold_ms; 
 static uint32_t ui_hb_threshold_ms; 
 static uint32_t mi_hb_threshold_ms; 
-
+static uint32_t velocity_diff_threshold;
 
 void Util_Config(Util_Config_T *util_config){
     bms_hb1_threshold_ms = util_config->bms_hb1_threshold_ms;
@@ -29,6 +29,34 @@ void Util_Config(Util_Config_T *util_config){
     pdm_hb_threshold_ms = util_config->pdm_hb_threshold_ms;
     ui_hb_threshold_ms = util_config->ui_hb_threshold_ms;
     mi_hb_threshold_ms = util_config->mi_hb_threshold_ms;
+    velocity_diff_threshold = util_config->velocity_diff_threshold;
+}
+
+DI_ERROR check_velocity_diff(STATE *state) {
+    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity;
+    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity;
+
+    if(vel1 > vel2 && vel1 - vel2 > velocity_diff_threshold) {
+        return ERROR_VELOCITIES_NOT_EQUAL;
+    } else if (vel1 > vel2 && vel1 - vel2 > velocity_diff_threshold) {
+        return ERROR_VELOCITIES_NOT_EQUAL;
+    } else {
+        return ERROR_NONE;
+    }
+}
+
+
+bool check_velocity_zero(STATE *state) {
+    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity;
+    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity;
+    return vel1 == 0 && vel2 == 0;
+}
+
+
+uint32_t aggregate_velocities(STATE *state) {
+    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity;
+    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity;
+    return (vel1+vel2)/2;
 }
 
 
@@ -137,6 +165,7 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->bms_pack_status->bmu_setup_mode = false;
 
     hb_data->ui_status->rasp_pi_on = false;
+    hb_data->mi_status->shutdown_okay = false;
 } 
 
 void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA *hb_data, uint32_t msTicks) {
@@ -160,6 +189,7 @@ void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA
     if(input_messages->recieved_heartbeats->ui_heartbeat) {
         hb_data->started_heartbeats->ui_heartbeat = true;
         hb_data->last_rcvd_ui_heartbeat = msTicks;
+        memcpy(hb_data->ui_status, input_messages->ui_status, sizeof(MI_STATUS));
     }
 
     if(input_messages->recieved_heartbeats->throttle_heartbeat) {
@@ -195,11 +225,7 @@ void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA
     if(input_messages->recieved_heartbeats->mi_heartbeat) {
         hb_data->started_heartbeats->mi_heartbeat = true;
         hb_data->last_rcvd_mi_heartbeat = msTicks;
-    }
-
-    if(input_messages->recieved_heartbeats->ui_heartbeat) {
-        hb_data->started_heartbeats->ui_heartbeat = true;
-        hb_data->last_rcvd_ui_heartbeat = msTicks;
+        memcpy(hb_data->mi_status, input_messages->mi_status, sizeof(MI_STATUS));
     }
 }
 
@@ -227,9 +253,9 @@ DI_ERROR check_bms_precharge(STATE *state) {
    }
 
    if(s->contactor_output[0] && s->contactor_output[1] && s->contactor_output[2]) {
-        return ERROR_BMS_PRECHARGE;
-   } else {
        return ERROR_NONE;
+   } else {
+       return ERROR_BMS_PRECHARGE;
    }
 }
 
@@ -267,7 +293,7 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
            return ERROR_LVS_BATTERY_TEST_FAILED;
        }
    } 
-   
+
    if(check_pdm_cs) {
        if(pdm_status->critical_systems_status) {
             if(pdm_status->critical_systems_dcdc) {
@@ -278,7 +304,7 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
        }
    }
 
-   return ERROR_NONE;
+   return check_velocity_diff(state);
 }
 
 DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {

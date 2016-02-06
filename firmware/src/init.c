@@ -29,7 +29,7 @@ DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
             Init_Cleanup(state);
             return change_mode(input, state, output, mode_request);
 
-        } else if (time_start_pdm > threshold_wait_time_pdm_ms) {
+        } else if (msTicks - time_start_pdm > threshold_wait_time_pdm_ms) {
             return ERROR_PDM_TEST_TIMEOUT;
 
         } else {
@@ -61,7 +61,7 @@ DI_ERROR check_precharge_and_pdm(INPUT *input, STATE *state, OUTPUT *output, MOD
 
     } else {
         // We did not yet start BMS request to precharge
-        output->messages->di_packet->ignition = DI_START;
+        output->messages->di_packet->ignition = DI_RUN;
         state->time_started_close_contactors_request_ms = msTicks;
         return ERROR_NONE;
     }
@@ -91,7 +91,7 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
     } else {
         // We haven't started tests for heartbeat existence
         output->low_voltage_relay_on = true;
-        output->messages->di_packet->ignition = DI_RUN;
+        output->messages->di_packet->ignition = DI_START;
         output->messages->di_packet->mode = OUT_INIT;
         state->time_started_init_tests_ms = msTicks;
         return ERROR_NONE;

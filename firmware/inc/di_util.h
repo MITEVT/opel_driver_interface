@@ -21,7 +21,32 @@ typedef struct {
     uint32_t pdm_hb_threshold_ms; 
     uint32_t ui_hb_threshold_ms; 
     uint32_t mi_hb_threshold_ms; 
+    uint32_t velocity_diff_threshold;
 } Util_Config_T;
+
+/**
+ * @details Checks that velocities are zero
+ *
+ * @param state current state of the submachine
+ * @return whether or not both velocities are zero
+ */
+bool check_velocity_zero(STATE *state);
+
+/**
+ * @details Averages readings from both velocity sensors
+ *
+ * @param state current state of the submachine
+ * @return integer representing aggregate velocity
+ */
+uint32_t aggregate_velocities(STATE *state);
+
+/**
+ * @details Checks that velocities are not too different from each other
+ *
+ * @param state current state of the submachine
+ * @return error if velocities are different
+ */
+DI_ERROR check_velocity_diff(STATE *state);
 
 /**
  * @details Checks to make sure precharge status is finished, error free, and contactors are closed
@@ -61,6 +86,7 @@ MODE_REQUEST get_mode_request(INPUT *input);
 
 /**
  *  @details updates the state and DI packet output to reflect the mode request
+ *           VALID FOR MOST STATES (EXCEPT SHUTDOWN STATE)
  *
  *  @param mode_request the requested mode (usually based on toggle/key inputs)
  *  @param state of state machine
