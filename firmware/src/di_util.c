@@ -3,11 +3,6 @@
 #include "di_util.h"
 #include "string.h"
 
-// TODO:
-// write initialize_state()
-// write initialize_output()
-// write initialize_input()
-
 static uint32_t bms_hb1_threshold_ms; 
 static uint32_t bms_hb2_threshold_ms; 
 static uint32_t bms_hb3_threshold_ms; 
@@ -18,6 +13,91 @@ static uint32_t pdm_hb_threshold_ms;
 static uint32_t ui_hb_threshold_ms; 
 static uint32_t mi_hb_threshold_ms; 
 static uint32_t velocity_diff_threshold;
+
+void initialize_state(STATE *state){
+    state->dsm_mode = MODE_OFF;
+    state->direction = DRIVE_NEUTRAL;
+    
+    HEARTBEAT_DATA *hb_data = state->heartbeat_data;
+    initialize_heartbeat_data(hb_data);
+
+    state->time_started_init_tests_ms = 0;
+    state->time_started_close_contactors_request_ms = 0;
+    state->time_started_PDM_test_ms = 0;
+    state->critical_systems_relay_on = false;
+    state->low_voltage_relay_on = false;
+}
+
+void initialize_output(OUTPUT *output){
+    ACCESSORIES_OUTPUT_REQUEST *acc_out = output->acc_output;
+    OUTPUT_MESSAGES *out_msgs = output->messages;
+    
+    turn_all_acc_off(acc_out);
+    out_msgs->error = ERROR_NONE;
+    
+    DI_PACKET *di_pkt = out_msgs->di_packet;
+    
+    di_pkt->ignition = DI_NONE;
+    di_pkt->mode = OUT_OFF;
+
+    output->low_voltage_relay_on = false;
+    output->critical_systems_relay_on = false;
+}
+
+void initialize_input(INPUT *input){
+    ACCESSORIES_INPUT_STATE *acc_in = input->acc_input;
+    INPUT_MESSAGES *inp_msgs = input->messages;    
+    RECIEVED_HEARTBEATS *rcvd_hbs = inp_msgs->recieved_heartbeats;
+
+    acc_in->wipers_on = false;
+    acc_in->headlight_switches = HEADLIGHT_OFF;
+    acc_in->turn_blinker_switches = BLINKER_OFF;
+
+    rcvd_hbs->bms_heartbeat1 = false;
+    rcvd_hbs->bms_heartbeat2 = false;
+    rcvd_hbs->bms_heartbeat3 = false;
+    rcvd_hbs->throttle_heartbeat = false;
+    rcvd_hbs->wv1_heartbeat = false;
+    rcvd_hbs->wv2_heartbeat = false;
+    rcvd_hbs->pdm_heartbeat = false;
+    rcvd_hbs->ui_heartbeat = false;
+    rcvd_hbs->mi_heartbeat = false;
+
+    input->keymodes = KEYMODE_OFF;
+    input->dcl = PARK;
+   
+    inp_msgs->wv1_status->velocity = 0;
+    inp_msgs->wv2_status->velocity = 0;
+
+    inp_msgs->pdm_status->low_voltage_status=false;
+    inp_msgs->pdm_status->low_voltage_dcdc=false;
+    inp_msgs->pdm_status->low_voltage_battery=false;
+    inp_msgs->pdm_status->critical_systems_status=false;
+    inp_msgs->pdm_status->critical_systems_battery=false;
+    inp_msgs->pdm_status->critical_systems_dcdc=false;
+
+    inp_msgs->throttle_status->brake_value=0;
+    inp_msgs->throttle_status->throttle_value=0;
+
+    inp_msgs->bms_precharge_status->contactor_error[0] = false;
+    inp_msgs->bms_precharge_status->contactor_output[0] = false;
+    inp_msgs->bms_precharge_status->contactor_error[1] = false;
+    inp_msgs->bms_precharge_status->contactor_output[1] = false;
+    inp_msgs->bms_precharge_status->contactor_error[2] = false;
+    inp_msgs->bms_precharge_status->contactor_output[2] = false;
+    inp_msgs->bms_precharge_status->precharge_status = 0;
+
+    inp_msgs->bms_pack_status->cells_over_voltage = false;
+    inp_msgs->bms_pack_status->cells_under_voltage = false;
+    inp_msgs->bms_pack_status->cells_over_temperature = false;
+    inp_msgs->bms_pack_status->measurement_untrusted = false;
+    inp_msgs->bms_pack_status->cmu_comm_timeout = false;
+    inp_msgs->bms_pack_status->vehicle_comm_timeout = false;
+    inp_msgs->bms_pack_status->cmu_can_power_off = false;
+    inp_msgs->bms_pack_status->bmu_setup_mode = false;
+
+    inp_msgs->ui_status->rasp_pi_on = false;
+}
 
 void Util_Config(Util_Config_T *util_config){
     bms_hb1_threshold_ms = util_config->bms_hb1_threshold_ms;

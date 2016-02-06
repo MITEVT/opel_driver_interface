@@ -38,7 +38,8 @@ typedef struct {
 
 typedef enum {
     DRIVE_FORWARD = 0,
-    DRIVE_REVERSE = 1
+    DRIVE_REVERSE = 1,
+    DRIVE_NEUTRAL = 2
 } DRIVE_DIRECTION;
 
 typedef enum {
@@ -100,6 +101,7 @@ typedef struct {
 
 typedef struct {
     bool shutdown_okay;
+    // TODO add motor controller current, and add corresponding checks
 } MI_STATUS;
 
 typedef struct {

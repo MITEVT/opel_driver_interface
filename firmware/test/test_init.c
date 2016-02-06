@@ -11,12 +11,7 @@ MODE_REQUEST mode_request;
 uint32_t msTicks;
 
 ACCESSORIES_INPUT_STATE acc_inp;
-INPUT_MESSAGES msgs;
-
-HEARTBEAT_DATA hb_data;
-
-ACCESSORIES_OUTPUT_REQUEST acc_out;
-OUTPUT_MESSAGES out_msgs;
+INPUT_MESSAGES in_msgs;
 
 RECEIVED_HEARTBEATS rcvd_hbs;
 WV_STATUS wv1_stat;
@@ -26,14 +21,13 @@ BMS_PRECHARGE_STATUS bms_precharge_stat;
 THROTTLE_STATUS throttle_stat;
 PDM_STATUS pdm_stat;
 
+HEARTBEAT_DATA hb_data;
+
+ACCESSORIES_OUTPUT_REQUEST acc_out;
+OUTPUT_MESSAGES out_msgs;
+
+//Set up all of the pointers
 TEST_SETUP(Util_Test) {
-
-	acc_inp.wipers_on = true;
-	acc_inp.headlight_switches = HIGHBEAM_ON;
-	acc_inp.turn_blinker_switches = RIGHT_BLINKER;
-
-	input.keymodes = KEYMODE_OFF;
-	
 	msgs.received_heartbeats = &rcvd_hbs;
 	msgs.wv1_status = &wv1_stat;
 	msgs.wv2_status = &wv2_stat;
@@ -41,22 +35,6 @@ TEST_SETUP(Util_Test) {
 	msgs.bms_precharge_status = &bms_precharge_stat;
 	msgs.throttle_status = &throttle_stat;
 	msgs.pdm_status = &pdm_stat;
-
-	input.dcl = REVERSE;
-
-	state.dsm_mode = MODE_INIT;
-	state.direction = DRIVE_FORWARD;
-	
-	hb_data.
-	hb_data.
-
-	state.time_started_init_tests_ms = 937294;
-	state.time_started_close_contactors_request_ms = 7653745;
-	state.time_started_PDM_test_ms = 864875;
-	state.critical_systems_relay_on = false;
-	state.low_voltage_relay_on = false;
-
-	//TODO: Finish creating random default values
 
 	input.acc_input = &acc_inp;
 	input.messages = &msgs;
