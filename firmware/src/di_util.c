@@ -37,7 +37,7 @@ void initialize_output(OUTPUT *output){
     
     DI_PACKET *di_pkt = out_msgs->di_packet;
     
-    di_pkt->ignition = DI_NONE;
+    di_pkt->ignition = DI_START;
     di_pkt->mode = OUT_OFF;
 
     output->low_voltage_relay_on = false;
