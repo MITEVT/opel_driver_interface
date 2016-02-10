@@ -9,7 +9,6 @@
 #define _TYPES_H_
 
 #include "chip.h"
-#include "test.h"
 
 /**
  * Modules:

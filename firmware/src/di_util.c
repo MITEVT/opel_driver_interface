@@ -66,8 +66,8 @@ void initialize_input(INPUT *input){
     input->keymodes = KEYMODE_OFF;
     input->dcl = PARK;
    
-    inp_msgs->wv1_status->velocity = 0;
-    inp_msgs->wv2_status->velocity = 0;
+    inp_msgs->wv1_status->velocity_rpm = 0;
+    inp_msgs->wv2_status->velocity_rpm = 0;
 
     inp_msgs->pdm_status->low_voltage_status=false;
     inp_msgs->pdm_status->low_voltage_dcdc=false;
@@ -113,8 +113,8 @@ void Util_Config(Util_Config_T *util_config){
 }
 
 DI_ERROR check_velocity_diff(STATE *state) {
-    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity;
-    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity;
+    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity_rpm;
+    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity_rpm;
 
     if(vel1 > vel2 && vel1 - vel2 > velocity_diff_threshold) {
         return ERROR_VELOCITIES_NOT_EQUAL;
@@ -127,15 +127,15 @@ DI_ERROR check_velocity_diff(STATE *state) {
 
 
 bool check_velocity_zero(STATE *state) {
-    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity;
-    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity;
+    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity_rpm;
+    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity_rpm;
     return vel1 == 0 && vel2 == 0;
 }
 
 
 uint32_t aggregate_velocities(STATE *state) {
-    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity;
-    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity;
+    uint32_t vel1 = state->heartbeat_data->wv1_status->velocity_rpm;
+    uint32_t vel2 = state->heartbeat_data->wv2_status->velocity_rpm;
     return (vel1+vel2)/2;
 }
 
@@ -214,8 +214,8 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->last_rcvd_mi_heartbeat = 0;
     hb_data->last_rcvd_pdm_heartbeat = 0;
 
-    hb_data->wv1_status->velocity = 0;
-    hb_data->wv2_status->velocity = 0;
+    hb_data->wv1_status->velocity_rpm = 0;
+    hb_data->wv2_status->velocity_rpm = 0;
 
     hb_data->pdm_status->low_voltage_status=false;
     hb_data->pdm_status->low_voltage_dcdc=false;
