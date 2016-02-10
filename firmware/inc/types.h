@@ -92,8 +92,7 @@ typedef struct {
 
 typedef struct {
     // Can be from 0 to 1700 rpm
-    // TODO change name to velocity_rpm
-    uint32_t velocity; 
+    uint32_t velocity_rpm; 
 } WV_STATUS;
 
 typedef struct {
