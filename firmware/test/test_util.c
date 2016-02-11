@@ -1,6 +1,6 @@
+#include "types.h"
 #include "di_util.h"
-#include "unity.h"
-#include "unity_fixture.h"
+#include "chip.h"
 
 STATE state;
 HEARTBEAT_DATA hb_data;
@@ -11,6 +11,7 @@ BMS_PRECHARGE_STATUS bms_precharge_status;
 THROTTLE_STATUS throttle_status;
 PDM_STATUS pdm_status;
 RECIEVED_HEARTBEATS started_heartbeats;
+UI_STATUS ui_status;
 
 TEST_GROUP(Util_Test);
 
@@ -55,8 +56,8 @@ TEST(Util_Test, test_initialize_heartbeat_data) {
 	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_mi_heartbeat);
 	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_pdm_heartbeat);
 
-    TEST_ASSERT_EQUAL_INT(0, wv1_status.velocity);
-    TEST_ASSERT_EQUAL_INT(0, wv2_status.velocity);
+    TEST_ASSERT_EQUAL_INT(0, wv1_status.velocity_rpm);
+    TEST_ASSERT_EQUAL_INT(0, wv2_status.velocity_rpm);
     TEST_ASSERT_FALSE(ui_status.rasp_pi_on);
     TEST_ASSERT_FALSE(bms_pack_status.cells_over_voltage);
     TEST_ASSERT_FALSE(bms_pack_status.cells_under_voltage);
@@ -109,6 +110,8 @@ TEST(Util_Test, test_process_input_heartbeat_data) {
 }
 
 TEST(Util_Test, test_initialize_state){
+    STATE state;
+    
     state.dsm_mode = MODE_DRIVE;
     state.direction = DRIVE_FORWARD;
     state.time_started_init_tests_ms = 3234315;
@@ -116,95 +119,94 @@ TEST(Util_Test, test_initialize_state){
     state.time_started_PDM_test_ms = 85947583;
     state.critical_systems_relay_on = true;
     state.low_voltage_relay_on = true;
-    HEARBEAT_DATA hb_data = state.heartbeat_data;    
 
-    hb_data.last_rcvd_bms_heartbeat1 = 8238;
-    hb_data.last_rcvd_bms_heartbeat2 = 76;
-    hb_data.last_rcvd_bms_heartbeat3 = 2;
-    hb_data.last_rcvd_wv1_heartbeat = 90;
-    hb_data.last_rcvd_wv2_heartbeat = 123;
-    hb_data.last_rcvd_throttle_heartbeat = 0;
-    hb_data.last_rcvd_ui_heartbeat = -394;
-    hb_data.last_rcvd_mi_heartbeat = -28;
-    hb_data.last_rcvd_pdm_heartbeat = -9;
+    state.heartbeat_data->last_rcvd_bms_heartbeat1 = 8238;
+    state.heartbeat_data->last_rcvd_bms_heartbeat2 = 76;
+    state.heartbeat_data->last_rcvd_bms_heartbeat3 = 2;
+    state.heartbeat_data->last_rcvd_wv1_heartbeat = 90;
+    state.heartbeat_data->last_rcvd_wv2_heartbeat = 123;
+    state.heartbeat_data->last_rcvd_throttle_heartbeat = 0;
+    state.heartbeat_data->last_rcvd_ui_heartbeat = -394;
+    state.heartbeat_data->last_rcvd_mi_heartbeat = -28;
+    state.heartbeat_data->last_rcvd_pdm_heartbeat = -9;
 
-    RECIEVED_HEARTBEATS rcvd_hbs = hb_data.started_heartbeats;
-    rcvd_hbs.bms_heartbeat1 = true;
-    rcvd_hbs.bms_heartbeat2 = false;
-    rcvd_hbs.bms_heartbeat3 = true;
-    rcvd_hbs.throttle_heartbeat = true;
-    rcvd_hbs.wv1_heartbeat = true;
-    rcvd_hbs.wv2_heartbeat = true;
-    rcvd_hbs.pdm_heartbeat = false;
-    rcvd_hbs.ui_heartbeat = true;
-    rcvd_hbs.mi_heartbeat = false;
+    RECIEVED_HEARTBEATS *rcvd_hbs = state.heartbeat_data->started_heartbeats;
+    rcvd_hbs->bms_heartbeat1 = true;
+    rcvd_hbs->bms_heartbeat2 = false;
+    rcvd_hbs->bms_heartbeat3 = true;
+    rcvd_hbs->throttle_heartbeat = true;
+    rcvd_hbs->wv1_heartbeat = true;
+    rcvd_hbs->wv2_heartbeat = true;
+    rcvd_hbs->pdm_heartbeat = false;
+    rcvd_hbs->ui_heartbeat = true;
+    rcvd_hbs->mi_heartbeat = false;
 
-    hb_data.wv1_status.velocity = 393;
-    hb_data.wv2_status.velocity = 8494;
+    state.heartbeat_data->wv1_status->velocity_rpm = 393;
+    state.heartbeat_data->wv2_status->velocity_rpm = 8494;
 
-    hb_data.pdm_status.low_voltage_status = true;
-    hb_data.pdm_status.low_voltage_dcdc = false;
-    hb_data.pdm_status.low_voltage_battery = true;
-    hb_data.pdm_status.critical_systems_status = true;
-    hb_data.pdm_status.critical_systems_battery = true;
-    hb_data.pdm_status.critical_systems_dcdc = true;
+    state.heartbeat_data->pdm_status->low_voltage_status = true;
+    state.heartbeat_data->pdm_status->low_voltage_dcdc = false;
+    state.heartbeat_data->pdm_status->low_voltage_battery = true;
+    state.heartbeat_data->pdm_status->critical_systems_status = true;
+    state.heartbeat_data->pdm_status->critical_systems_battery = true;
+    state.heartbeat_data->pdm_status->critical_systems_dcdc = true;
 
-    hb_data.throttle_status.brake_value= 93;
-    hb_data.throttle_status.throttle_value = 3902;
+    state.heartbeat_data->throttle_status->brake_value= 93;
+    state.heartbeat_data->throttle_status->throttle_value = 3902;
 
-    hb_data.bms_precharge_status.contactor_error[0] = true;
-    hb_data.bms_precharge_status.contactor_output[0] = false;
-    hb_data.bms_precharge_status.contactor_error[1] = true;
-    hb_data.bms_precharge_status.contactor_output[1] = true;
-    hb_data.bms_precharge_status.contactor_error[2] = true;
-    hb_data.bms_precharge_status.contactor_output[2] = true;
-    hb_data.bms_precharge_status.precharge_status = 0;
+    state.heartbeat_data->bms_precharge_status->contactor_error[0] = true;
+    state.heartbeat_data->bms_precharge_status->contactor_output[0] = false;
+    state.heartbeat_data->bms_precharge_status->contactor_error[1] = true;
+    state.heartbeat_data->bms_precharge_status->contactor_output[1] = true;
+    state.heartbeat_data->bms_precharge_status->contactor_error[2] = true;
+    state.heartbeat_data->bms_precharge_status->contactor_output[2] = true;
+    state.heartbeat_data->bms_precharge_status->precharge_status = 0;
 
-    hb_data.bms_pack_status.cells_over_voltage = false;
-    hb_data.bms_pack_status.cells_under_voltage = true;
-    hb_data.bms_pack_status.cells_over_temperature = true;
-    hb_data.bms_pack_status.measurement_untrusted = false;
-    hb_data.bms_pack_status.cmu_comm_timeout = true;
-    hb_data.bms_pack_status.vehicle_comm_timeout = false;
-    hb_data.bms_pack_status.cmu_can_power_off = true;
-    hb_data.bms_pack_status.bmu_setup_mode = true;
+    state.heartbeat_data->bms_pack_status->cells_over_voltage = false;
+    state.heartbeat_data->bms_pack_status->cells_under_voltage = true;
+    state.heartbeat_data->bms_pack_status->cells_over_temperature = true;
+    state.heartbeat_data->bms_pack_status->measurement_untrusted = false;
+    state.heartbeat_data->bms_pack_status->cmu_comm_timeout = true;
+    state.heartbeat_data->bms_pack_status->vehicle_comm_timeout = false;
+    state.heartbeat_data->bms_pack_status->cmu_can_power_off = true;
+    state.heartbeat_data->bms_pack_status->bmu_setup_mode = true;
 
-    hb_data.ui_status.rasp_pi_on = true;
+    state.heartbeat_data->ui_status->rasp_pi_on = true;
 
     initialize_state(&state);
 
     TEST_ASSERT_INT_EQUAL(MODE_OFF, state.dsm_mode);
     TEST_ASSERT_INT_EQUAL(DRIVE_NEUTRAL, state.direction);
-    TEST_ASSERT_INT_EQUAL(0, time_started_init_tests_ms);
-    TEST_ASSERT_INT_EQUAL(0, time_started_close_contactors_request_ms);
-    TEST_ASSERT_INT_EQUAL(0, time_started_PDM_test_ms); 
+    TEST_ASSERT_INT_EQUAL(0, state.time_started_init_tests_ms);
+    TEST_ASSERT_INT_EQUAL(0, state.time_started_close_contactors_request_ms);
+    TEST_ASSERT_INT_EQUAL(0, state.time_started_PDM_test_ms); 
     TEST_ASSERT_FALSE(state.critical_systems_relay_on);
     TEST_ASSERT_FALSE(state.low_voltage_relay_on);
 
-	initialize_heartbeat_data(&hb_data);
+	initialize_heartbeat_data(state.heartbeat_data);
 
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->bms_heartbeat1);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->bms_heartbeat2);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->bms_heartbeat3);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->throttle_heartbeat);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->wv1_heartbeat);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->wv2_heartbeat);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->pdm_heartbeat);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->ui_heartbeat);
-    TEST_ASSERT_FALSE(hb_data.started_heartbeats->mi_heartbeat);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->bms_heartbeat1);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->bms_heartbeat2);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->bms_heartbeat3);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->throttle_heartbeat);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->wv1_heartbeat);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->wv2_heartbeat);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->pdm_heartbeat);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->ui_heartbeat);
+    TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->mi_heartbeat);
 
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat1);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat2);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat3);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_wv1_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_wv2_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_throttle_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_ui_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_mi_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_pdm_heartbeat);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat1);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat2);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat3);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_wv1_heartbeat);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_wv2_heartbeat);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_throttle_heartbeat);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_ui_heartbeat);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_mi_heartbeat);
+	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_pdm_heartbeat);
 
-    TEST_ASSERT_EQUAL_INT(0, wv1_status.velocity);
-    TEST_ASSERT_EQUAL_INT(0, wv2_status.velocity);
+    TEST_ASSERT_EQUAL_INT(0, wv1_status.velocity_rpm);
+    TEST_ASSERT_EQUAL_INT(0, wv2_status.velocity_rpm);
     TEST_ASSERT_FALSE(ui_status.rasp_pi_on);
     TEST_ASSERT_FALSE(bms_pack_status.cells_over_voltage);
     TEST_ASSERT_FALSE(bms_pack_status.cells_under_voltage);
@@ -248,4 +250,4 @@ TEST_GROUP_RUNNER(Util_Test) {
 	RUN_TEST_CASE(Util_Test, test_convert_acc);
 	RUN_TEST_CASE(Util_Test, test_process_input_heartbeat_data);
 	RUN_TEST_CASE(Util_Test, test_turn_all_acc_off);
-}
+

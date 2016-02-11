@@ -9,6 +9,7 @@
 #define _INIT_H_
 
 #include "chip.h"
+#include "types.h"
 
 /**
  * @details defines the threshold wait time for which we should
