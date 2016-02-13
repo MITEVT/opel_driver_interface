@@ -116,7 +116,7 @@ TEST(Util_Test, test_initialize_state){
     state.direction = DRIVE_FORWARD;
     state.time_started_init_tests_ms = 3234315;
     state.time_started_close_contactors_request_ms = 43947183;
-    state.time_started_PDM_test_ms = 85947583;
+    state.time_started_PDM_tests_ms = 85947583;
     state.critical_systems_relay_on = true;
     state.low_voltage_relay_on = true;
 

@@ -1,4 +1,4 @@
-#include "shutdown.h"
+#include "shutdown_normal.h"
 #include "unity.h"
 #include "unity_fixture.h"
 
@@ -36,8 +36,8 @@ TEST(Shutdown_Normal_Test, test_Shutdown_Normal_Cleanup) {
 }
 
 
-TEST_GROUP_RUNNER(Shutdown_Normal_test) {
-
+TEST_GROUP_RUNNER(Shutdown_Normal_Test) {
+RUN_TEST_CASE(Shutdown_Normal_Test, test_Shutdown_Normal_Cleanup);
 }
 
 

@@ -7,7 +7,7 @@
 
 #ifndef _SHUTDOWN_NORMAL_H_
 #define _SHUTDOWN_NORMAL_H_
-
+#include "types.h"
 #include "chip.h"
 
 /**
