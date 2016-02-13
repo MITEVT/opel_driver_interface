@@ -137,7 +137,7 @@ typedef struct {
 
     uint32_t time_started_init_tests_ms;
     uint32_t time_started_close_contactors_request_ms;
-    uint32_t time_started_PDM_test_ms;
+    uint32_t time_started_PDM_tests_ms;
 
     uint32_t time_started_module_shutdown_ms;
     uint32_t time_started_velocity_zero_ms;
