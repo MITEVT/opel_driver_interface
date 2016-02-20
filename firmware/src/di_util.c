@@ -19,9 +19,26 @@ static uint32_t velocity_max_rpm;
 static uint32_t throttle_max;
 static uint32_t brake_max;
 
+void Util_Config(Util_Config_T *util_config){
+    bms_hb1_threshold_ms = util_config->bms_hb1_threshold_ms;
+    bms_hb2_threshold_ms = util_config->bms_hb2_threshold_ms;
+    bms_hb3_threshold_ms = util_config->bms_hb3_threshold_ms;
+    throttle_hb_threshold_ms = util_config->throttle_hb_threshold_ms;
+    wv1_hb_threshold_ms = util_config->wv1_hb_threshold_ms;
+    wv2_hb_threshold_ms = util_config->wv2_hb_threshold_ms;
+    pdm_hb_threshold_ms = util_config->pdm_hb_threshold_ms;
+    ui_hb_threshold_ms = util_config->ui_hb_threshold_ms;
+    mi_hb_threshold_ms = util_config->mi_hb_threshold_ms;
+    velocity_diff_threshold = util_config->velocity_diff_threshold;
+    velocity_max_rpm = util_config->velocity_max_rpm;
+    throttle_max = util_config->throttle_max;
+    brake_max = util_config->brake_max;
+}
+
 void initialize_state(STATE *state){
     state->dsm_mode = MODE_OFF;
     state->direction = DRIVE_NEUTRAL;
+
     HEARTBEAT_DATA *hb_data = state->heartbeat_data;
     initialize_heartbeat_data(hb_data);
 
@@ -66,6 +83,8 @@ void initialize_input(INPUT *input){
     rcvd_hbs->pdm_heartbeat = false;
     rcvd_hbs->ui_heartbeat = false;
     rcvd_hbs->mi_heartbeat = false;
+    rcvd_hbs->brusa_heartbeat1 = false;
+    rcvd_hbs->brusa_heartbeat2 = false;
 
     input->keymodes = KEYMODE_OFF;
     input->dcl = PARK;
@@ -101,22 +120,10 @@ void initialize_input(INPUT *input){
     inp_msgs->bms_pack_status->bmu_setup_mode = false;
 
     inp_msgs->ui_status->rasp_pi_on = false;
-}
 
-void Util_Config(Util_Config_T *util_config){
-    bms_hb1_threshold_ms = util_config->bms_hb1_threshold_ms;
-    bms_hb2_threshold_ms = util_config->bms_hb2_threshold_ms;
-    bms_hb3_threshold_ms = util_config->bms_hb3_threshold_ms;
-    throttle_hb_threshold_ms = util_config->throttle_hb_threshold_ms;
-    wv1_hb_threshold_ms = util_config->wv1_hb_threshold_ms;
-    wv2_hb_threshold_ms = util_config->wv2_hb_threshold_ms;
-    pdm_hb_threshold_ms = util_config->pdm_hb_threshold_ms;
-    ui_hb_threshold_ms = util_config->ui_hb_threshold_ms;
-    mi_hb_threshold_ms = util_config->mi_hb_threshold_ms;
-    velocity_diff_threshold = util_config->velocity_diff_threshold;
-    velocity_max_rpm = util_config->velocity_max_rpm;
-    throttle_max = util_config->throttle_max;
-    brake_max = util_config->brake_max;
+    inp_msgs->brusa_status->hardware_on = false;
+    inp_msgs->brusa_status->overall_error_reported = true;
+    inp_msgs->brusa_status->specific_error_reported = true;
 }
 
 DI_ERROR check_velocity_diff(STATE *state) {
@@ -209,6 +216,8 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->started_heartbeats->pdm_heartbeat=false;
     hb_data->started_heartbeats->ui_heartbeat=false;
     hb_data->started_heartbeats->mi_heartbeat=false;
+    hb_data->started_heartbeats->brusa_heartbeat1=false;
+    hb_data->started_heartbeats->brusa_heartbeat2=false;
 
     hb_data->last_rcvd_bms_heartbeat1 = 0;
     hb_data->last_rcvd_bms_heartbeat2 = 0;
@@ -220,6 +229,9 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->last_rcvd_ui_heartbeat = 0;
     hb_data->last_rcvd_mi_heartbeat = 0;
     hb_data->last_rcvd_pdm_heartbeat = 0;
+
+    hb_data->last_rcvd_brusa_heartbeat1 = 0;
+    hb_data->last_rcvd_brusa_heartbeat2 = 0;
 
     hb_data->wv1_status->velocity_rpm = 0;
     hb_data->wv2_status->velocity_rpm = 0;
@@ -253,6 +265,10 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
 
     hb_data->ui_status->rasp_pi_on = false;
     hb_data->mi_status->shutdown_okay = false;
+
+    hb_data->brusa_status->hardware_on = false;
+    hb_data->brusa_status->specific_error_reported = false;
+    hb_data->brusa_status->overall_error_reported = false;
 } 
 
 void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA *hb_data, uint32_t msTicks) {
@@ -314,6 +330,19 @@ void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA
         hb_data->last_rcvd_mi_heartbeat = msTicks;
         memcpy(hb_data->mi_status, input_messages->mi_status, sizeof(MI_STATUS));
     }
+
+    if(input_messages->recieved_heartbeats->brusa_heartbeat2) {
+        hb_data->started_heartbeats->brusa_heartbeat2 = true;
+        hb_data->last_rcvd_brusa_heartbeat2 = msTicks;
+        hb_data->brusa_status->specific_error_reported = input_messages->brusa_status->specific_error_reported;
+    }
+
+    if(input_messages->recieved_heartbeats->brusa_heartbeat1) {
+        hb_data->started_heartbeats->brusa_heartbeat1 = true;
+        hb_data->last_rcvd_brusa_heartbeat1 = msTicks;
+        hb_data->brusa_status->overall_error_reported = input_messages->brusa_status->overall_error_reported;
+        hb_data->brusa_status->hardware_on = input_messages->brusa_status->hardware_on;
+    }
 }
 
 void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OUTPUT_REQUEST *out_req) { 
@@ -351,9 +380,6 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
     UI_STATUS *ui_status = hb_data->ui_status;
     BMS_PACK_STATUS *bms_pack_status = hb_data->bms_pack_status;
     PDM_STATUS *pdm_status = hb_data->pdm_status;
-    
-    // TODO add range checks on these values based on results of group meeting
-    // THROTTLE_STATUS *throttle_status = hb_data->throttle_status;
     
     if(!ui_status->rasp_pi_on) {
         return ERROR_INIT_UI_HEARTBEAT;
@@ -393,6 +419,11 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
     uint32_t w2_velocity_rpm = hb_data->wv2_status->velocity_rpm;
     uint32_t throttle_val = hb_data->throttle_status->throttle_value;
     uint32_t brake_val = hb_data->throttle_status->brake_value;
+    uint32_t motor_current = state->heartbeat_data->mi_status->motor_controller_current_mA;
+
+    if(brake_val > 0 && motor_current != 0) {
+        return ERROR_INCONSISTENT_BRAKE_AND_MOTOR_CURRENT;
+    }
 
     if(brake_val > brake_max) {
         return ERROR_BRAKE_OUT_OF_RANGE;
@@ -488,20 +519,3 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     
     return ERROR_NONE;
 } 
-
-DI_ERROR check_Brakes(STATE* state){
-    uint16_t brake_value = state->heartbeat_data->throttle_status->brake_value;
-    uint32_t motor_current = state->heartbeat_data->mi_status->motor_controller_current_mA;
-
-    uint16_t brake_threshold = 460; //@see THROTTLE_STATUS in types.h
-
-    if (brake_value > brake_threshold && motor_current > 0) { //if brakes are pressed
-        return ERROR_CONTENT_MI_HEARTBEAT;
-    } else {
-        return ERROR_NONE;
-    }
-}
-
-
-
-

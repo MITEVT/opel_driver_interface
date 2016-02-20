@@ -34,6 +34,8 @@ typedef struct {
     bool pdm_heartbeat; 
     bool ui_heartbeat; 
     bool mi_heartbeat; 
+    bool brusa_heartbeat1; 
+    bool brusa_heartbeat2; 
 } RECIEVED_HEARTBEATS;
 
 typedef enum {
@@ -104,6 +106,12 @@ typedef struct {
 } MI_STATUS;
 
 typedef struct {
+    bool overall_error_reported;
+    bool specific_error_reported;
+    bool hardware_on; 
+} BRUSA_STATUS;
+
+typedef struct {
     RECIEVED_HEARTBEATS *started_heartbeats;
 
     // The main BMS heartbeat (if on or off)
@@ -120,6 +128,9 @@ typedef struct {
     uint32_t last_rcvd_mi_heartbeat;
     uint32_t last_rcvd_pdm_heartbeat;
 
+    uint32_t last_rcvd_brusa_heartbeat1;
+    uint32_t last_rcvd_brusa_heartbeat2;
+
     WV_STATUS *wv1_status;
     WV_STATUS *wv2_status;
     UI_STATUS *ui_status;
@@ -128,6 +139,7 @@ typedef struct {
     BMS_PRECHARGE_STATUS *bms_precharge_status;
     THROTTLE_STATUS *throttle_status;
     PDM_STATUS *pdm_status;
+    BRUSA_STATUS *brusa_status;
 } HEARTBEAT_DATA;
 
 typedef struct {
@@ -206,6 +218,7 @@ typedef struct {
     BMS_PRECHARGE_STATUS *bms_precharge_status;
     THROTTLE_STATUS *throttle_status;
     PDM_STATUS *pdm_status;
+    BRUSA_STATUS *brusa_status;
 } INPUT_MESSAGES;
 
 typedef struct {
@@ -285,7 +298,12 @@ typedef enum {
     
     ERROR_VELOCITY_OUT_OF_RANGE = 42,
     ERROR_THROTTLE_OUT_OF_RANGE = 43,
-    ERROR_BRAKE_OUT_OF_RANGE = 44
+    ERROR_BRAKE_OUT_OF_RANGE = 44,
+
+    ERROR_BRUSA_NOT_ON = 45,
+    ERROR_BRUSA_OVERALL_ERROR = 46,
+    ERROR_BRUSA_SPECIFIC_ERROR = 47,
+    ERROR_INCONSISTENT_BRAKE_AND_MOTOR_CURRENT = 48
 } DI_ERROR;
 
 typedef enum {
