@@ -14,6 +14,7 @@ THROTTLE_STATUS throttle_status;
 PDM_STATUS pdm_status;
 RECIEVED_HEARTBEATS started_heartbeats;
 UI_STATUS ui_status;
+MI_STATUS mi_status;
 
 TEST_GROUP(Util_Test);
 
@@ -22,6 +23,7 @@ TEST_SETUP(Util_Test) {
     hb_data.wv1_status = &wv1_status;
     hb_data.wv2_status = &wv2_status;
     hb_data.ui_status = &ui_status;
+    hb_data.mi_status = &mi_status;
     hb_data.bms_pack_status = &bms_pack_status;
     hb_data.bms_precharge_status = &bms_precharge_status;
     hb_data.throttle_status = &throttle_status;
@@ -36,7 +38,7 @@ TEST_TEAR_DOWN(Util_Test) {
 
 TEST(Util_Test, test_initialize_heartbeat_data) {
 
-	initialize_heartbeat_data(&hb_data);
+    initialize_heartbeat_data(&hb_data);
 
     TEST_ASSERT_FALSE(hb_data.started_heartbeats->bms_heartbeat1);
     TEST_ASSERT_FALSE(hb_data.started_heartbeats->bms_heartbeat2);
@@ -81,7 +83,6 @@ TEST(Util_Test, test_initialize_heartbeat_data) {
     TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[3]);
     TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[3]);
     TEST_ASSERT_EQUAL_INT(0, bms_precharge_status.precharge_status);
-
     // TODO: Add asserts for module status structs contain False/0 (e.g. BMS_PRECHARGE_STATUS, WV_STATUS, etc.) in hb_data
     // TODO Add asserts for UI status!
 }
@@ -106,13 +107,12 @@ TEST(Util_Test, test_convert_acc) {
 }
 
 TEST(Util_Test, test_process_input_heartbeat_data) {
-	TEST_ASSERT_TRUE(true);
     // TODO: Write test to make sure the structs containing heartbeat data from INPUT_MESSAGES are properly used to update STATE
     //  - Make sure to test cases when no input heartbeat present, heartbeat present but no int/bool status data updated, and heartbeat present and int/bool status data updated
 }
 
+
 TEST(Util_Test, test_initialize_state){
-    STATE state;
     
     state.dsm_mode = MODE_DRIVE;
     state.direction = DRIVE_FORWARD;
@@ -227,11 +227,13 @@ TEST(Util_Test, test_initialize_state){
     TEST_ASSERT_FALSE(pdm_status.critical_systems_battery);
     TEST_ASSERT_FALSE(pdm_status.critical_systems_dcdc);
     
-    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[3]);
-    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[3]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[2]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[2]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[0]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[0]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[1]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[1]);
     TEST_ASSERT_EQUAL_INT(0, bms_precharge_status.precharge_status);
-
-
 }
 
 TEST(Util_Test, test_turn_all_acc_off) {
@@ -251,5 +253,6 @@ TEST_GROUP_RUNNER(Util_Test) {
 	RUN_TEST_CASE(Util_Test, test_initialize_heartbeat_data);
 	RUN_TEST_CASE(Util_Test, test_convert_acc);
 	RUN_TEST_CASE(Util_Test, test_process_input_heartbeat_data);
+	RUN_TEST_CASE(Util_Test, test_initialize_state);
 	RUN_TEST_CASE(Util_Test, test_turn_all_acc_off);
 }

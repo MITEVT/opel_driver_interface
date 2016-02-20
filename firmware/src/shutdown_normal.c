@@ -93,7 +93,14 @@ DI_ERROR shutdown_ctcr_check(STATE *state, OUTPUT *output, uint32_t msTicks) {
 
 DI_ERROR no_velocity_error(STATE *state) {
     if(check_velocity_zero(state)) {
-        return check_velocity_diff(state);
+        uint32_t velocity1_rpm = state->heartbeat_data->wv1_status->velocity_rpm;
+        uint32_t velocity2_rpm = state->heartbeat_data->wv2_status->velocity_rpm;
+        DI_ERROR error = check_velocity_in_range(velocity1_rpm, velocity2_rpm);
+        if(error == ERROR_NONE) {
+            return check_velocity_diff(state);
+        } else {
+            return error;
+        }
     } else {
         return ERROR_VELOCITY_NOT_ZERO;
     }

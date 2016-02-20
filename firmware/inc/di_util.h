@@ -123,11 +123,14 @@ void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OU
  */
 void turn_all_acc_off(ACCESSORIES_OUTPUT_REQUEST *out_req);
 
-//TODO: Add Spec for initliaze_state
-
 /**
- * 
-*/
+ * @details Checks that velocities (RPM) from both sensors are within [0,1700)
+ *
+ * @param velocity1_rpm velocity in RPM of wheel velocity sensor 1
+ * @param velocity2_rpm velocity in RPM of wheel velocity sensor 2
+ */
+DI_ERROR check_velocity_in_range(uint32_t velocity1_rpm, uint32_t velocity2_rpm);
 
+//TODO: Add Spec for initialize_state
 void initialize_state(STATE *state);
 #endif

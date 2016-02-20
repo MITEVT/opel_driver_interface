@@ -2,6 +2,8 @@
 #include "unity.h"
 #include "unity_fixture.h"
 
+// TODO Finish up these tests!!!
+
 TEST_GROUP(Shutdown_Normal_Test);
 
 STATE state;
@@ -29,15 +31,15 @@ TEST(Shutdown_Normal_Test, test_Shutdown_Normal_Cleanup) {
 
     state.critical_systems_relay_on = true;
     state.low_voltage_relay_on = false;
-    
-     
+}
 
-
+TEST(Shutdown_Normal_Test, test_Shutdown_Normal_Step) {
 }
 
 
 TEST_GROUP_RUNNER(Shutdown_Normal_Test) {
-RUN_TEST_CASE(Shutdown_Normal_Test, test_Shutdown_Normal_Cleanup);
+    RUN_TEST_CASE(Shutdown_Normal_Test, test_Shutdown_Normal_Cleanup);
+    RUN_TEST_CASE(Shutdown_Normal_Test, test_Shutdown_Normal_Step);
 }
 
 

@@ -22,7 +22,6 @@ static uint32_t brake_max;
 void initialize_state(STATE *state){
     state->dsm_mode = MODE_OFF;
     state->direction = DRIVE_NEUTRAL;
-    
     HEARTBEAT_DATA *hb_data = state->heartbeat_data;
     initialize_heartbeat_data(hb_data);
 
@@ -403,13 +402,22 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
         return ERROR_THROTTLE_OUT_OF_RANGE;
     }
 
-    if (w1_velocity_rpm > velocity_max_rpm){
-        return ERROR_VELOCITY_OUT_OF_RANGE;
-    } else if (w2_velocity_rpm > velocity_max_rpm)  {
-        return ERROR_VELOCITY_OUT_OF_RANGE;
+    DI_ERROR error = check_velocity_in_range(w1_velocity_rpm, w2_velocity_rpm);
+    if(error == ERROR_NONE) {
+        return check_velocity_diff(state);
+    } else {
+        return error;
     }
+}
 
-    return check_velocity_diff(state);
+DI_ERROR check_velocity_in_range(uint32_t velocity1_rpm, uint32_t velocity2_rpm) {
+    if (velocity1_rpm > velocity_max_rpm){
+        return ERROR_VELOCITY_OUT_OF_RANGE;
+    } else if (velocity2_rpm > velocity_max_rpm)  {
+        return ERROR_VELOCITY_OUT_OF_RANGE;
+    } else {
+        return ERROR_NONE;
+    }
 }
 
 DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
