@@ -16,32 +16,18 @@ void Init_Config(Init_Config_T *init_config) {
 void Init_Cleanup(STATE *state) {
     state->time_started_init_tests_ms = 0;
     state->time_started_close_contactors_request_ms = 0;
-    state->time_started_PDM_test_ms = 0;
-}
-
-DI_ERROR no_heartbeat_error(STATE* state){
-    w1_velocity_rpm = state->heartbeat_data->wv1_status->velocity_rpm;
-    w2_velocity_rpm = state->heartbeat_data->wv2_status->velocity_rpm;
-
-    wheel_velocity_range_rpm = 1700;
-
-    if (w1_velocity_rpm != v2_velocity_rpm) {
-        return ERROR_VELOCITIES_NOT_EQUAL;
-    } else if (0 <= w1_velocity_rpm && w1_velocity_rpm <= wheel_velocity_range_rpm){
-        return ERROR_NONE;
-    } else {
-        return ERROR_VELOCITY_OUT_OF_RANGE;
-    }
+    state->time_started_PDM_tests_ms = 0;
 }
 
 DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
-    uint32_t time_start_pdm = state->time_started_PDM_test_ms;
+    uint32_t time_start_pdm = state->time_started_PDM_tests_ms;
     if(time_start_pdm != 0) {
         // To check if PDM results are OK; tests all heartbeats too!
         DI_ERROR hb_content_error = no_heartbeat_error(state, msTicks, true); 
         
         if(hb_content_error == ERROR_NONE) {
             Init_Cleanup(state);
+            // TODO Call Util initialization
             return change_mode(input, state, output, mode_request);
 
         } else if (msTicks - time_start_pdm > threshold_wait_time_pdm_ms) {
@@ -53,7 +39,7 @@ DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
         }
     } else {
         output->critical_systems_relay_on = true;
-        state->time_started_PDM_test_ms = msTicks;
+        state->time_started_PDM_tests_ms = msTicks;
         return ERROR_NONE;
     }
 }

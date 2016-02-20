@@ -13,6 +13,7 @@ static uint32_t pdm_hb_threshold_ms;
 static uint32_t ui_hb_threshold_ms; 
 static uint32_t mi_hb_threshold_ms; 
 static uint32_t velocity_diff_threshold;
+static uint32_t velocity_max_rpm;
 
 void initialize_state(STATE *state){
     state->dsm_mode = MODE_OFF;
@@ -23,7 +24,7 @@ void initialize_state(STATE *state){
 
     state->time_started_init_tests_ms = 0;
     state->time_started_close_contactors_request_ms = 0;
-    state->time_started_PDM_test_ms = 0;
+    state->time_started_PDM_tests_ms = 0;
     state->critical_systems_relay_on = false;
     state->low_voltage_relay_on = false;
 }
@@ -110,6 +111,7 @@ void Util_Config(Util_Config_T *util_config){
     ui_hb_threshold_ms = util_config->ui_hb_threshold_ms;
     mi_hb_threshold_ms = util_config->mi_hb_threshold_ms;
     velocity_diff_threshold = util_config->velocity_diff_threshold;
+    velocity_max_rpm = util_config->velocity_max_rpm;
 }
 
 DI_ERROR check_velocity_diff(STATE *state) {
@@ -340,51 +342,58 @@ DI_ERROR check_bms_precharge(STATE *state) {
 }
 
 DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
-   HEARTBEAT_DATA *hb_data = state->heartbeat_data;
-   UI_STATUS *ui_status = hb_data->ui_status;
-   BMS_PACK_STATUS *bms_pack_status = hb_data->bms_pack_status;
-   PDM_STATUS *pdm_status = hb_data->pdm_status;
+    HEARTBEAT_DATA *hb_data = state->heartbeat_data;
+    UI_STATUS *ui_status = hb_data->ui_status;
+    BMS_PACK_STATUS *bms_pack_status = hb_data->bms_pack_status;
+    PDM_STATUS *pdm_status = hb_data->pdm_status;
+    
+    // TODO add range checks on these values based on results of group meeting
+    // THROTTLE_STATUS *throttle_status = hb_data->throttle_status;
+    
+    if(!ui_status->rasp_pi_on) {
+        return ERROR_INIT_UI_HEARTBEAT;
+    } else if(bms_pack_status->cells_over_voltage) {
+        return ERROR_CONTENT_BMS_OVER_VOLTAGE;
+    } else if(bms_pack_status->cells_under_voltage) {
+        return ERROR_CONTENT_BMS_UNDER_VOLTAGE;
+    } else if(bms_pack_status->cells_over_temperature) {
+         return ERROR_CONTENT_BMS_OVER_TEMP;
+    } else if(bms_pack_status->measurement_untrusted) {
+        return ERROR_CONTENT_BMS_MEASUREMENT_UNTRUSTED;
+    } else if(bms_pack_status->cmu_comm_timeout) {
+        return ERROR_CONTENT_BMS_CMU_COMM_TIMEOUT;
+    } else if(bms_pack_status->vehicle_comm_timeout) {
+        return ERROR_CONTENT_BMS_VEHICLE_COMM_TIMEOUT;
+    } else if(bms_pack_status->cmu_can_power_off) {
+        return ERROR_CONTENT_BMS_CAN_POWER;
+    } else if(pdm_status->low_voltage_status) {
+        if(pdm_status->low_voltage_dcdc) {
+            return ERROR_LVS_DC_TEST_FAILED;
+        } else {
+            return ERROR_LVS_BATTERY_TEST_FAILED;
+        }
+    } 
+    
+    if(check_pdm_cs) {
+        if(pdm_status->critical_systems_status) {
+             if(pdm_status->critical_systems_dcdc) {
+                 return ERROR_CS_DC_TEST_FAILED;
+             } else {
+                 return ERROR_CS_BATTERY_TEST_FAILED;
+             }
+        }
+    }
 
-   // TODO add range checks on these values based on results of group meeting
-   // WV_STATUS *wv1_status = hb_data->wv1_status;
-   // WV_STATUS *wv2_status = hb_data->wv2_status;
-   // THROTTLE_STATUS *throttle_status = hb_data->throttle_status;
+    uint32_t w1_velocity_rpm = hb_data->wv1_status->velocity_rpm;
+    uint32_t w2_velocity_rpm = hb_data->wv2_status->velocity_rpm;
 
-   if(!ui_status->rasp_pi_on) {
-       return ERROR_INIT_UI_HEARTBEAT;
-   } else if(bms_pack_status->cells_over_voltage) {
-       return ERROR_CONTENT_BMS_OVER_VOLTAGE;
-   } else if(bms_pack_status->cells_under_voltage) {
-       return ERROR_CONTENT_BMS_UNDER_VOLTAGE;
-   } else if(bms_pack_status->cells_over_temperature) {
-        return ERROR_CONTENT_BMS_OVER_TEMP;
-   } else if(bms_pack_status->measurement_untrusted) {
-       return ERROR_CONTENT_BMS_MEASUREMENT_UNTRUSTED;
-   } else if(bms_pack_status->cmu_comm_timeout) {
-       return ERROR_CONTENT_BMS_CMU_COMM_TIMEOUT;
-   } else if(bms_pack_status->vehicle_comm_timeout) {
-       return ERROR_CONTENT_BMS_VEHICLE_COMM_TIMEOUT;
-   } else if(bms_pack_status->cmu_can_power_off) {
-       return ERROR_CONTENT_BMS_CAN_POWER;
-   } else if(pdm_status->low_voltage_status) {
-       if(pdm_status->low_voltage_dcdc) {
-           return ERROR_LVS_DC_TEST_FAILED;
-       } else {
-           return ERROR_LVS_BATTERY_TEST_FAILED;
-       }
-   } 
+    if (w1_velocity_rpm > velocity_max_rpm){
+        return ERROR_VELOCITY_OUT_OF_RANGE;
+    } else if (w2_velocity_rpm > velocity_max_rpm)  {
+        return ERROR_VELOCITY_OUT_OF_RANGE;
+    }
 
-   if(check_pdm_cs) {
-       if(pdm_status->critical_systems_status) {
-            if(pdm_status->critical_systems_dcdc) {
-                return ERROR_CS_DC_TEST_FAILED;
-            } else {
-                return ERROR_CS_BATTERY_TEST_FAILED;
-            }
-       }
-   }
-
-   return check_velocity_diff(state);
+    return check_velocity_diff(state);
 }
 
 DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {

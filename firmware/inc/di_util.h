@@ -22,6 +22,7 @@ typedef struct {
     uint32_t ui_hb_threshold_ms; 
     uint32_t mi_hb_threshold_ms; 
     uint32_t velocity_diff_threshold;
+    uint32_t velocity_max_rpm;
 } Util_Config_T;
 
 /**
