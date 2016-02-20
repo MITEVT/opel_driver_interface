@@ -23,7 +23,7 @@ DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
     uint32_t time_start_pdm = state->time_started_PDM_tests_ms;
     if(time_start_pdm != 0) {
         // To check if PDM results are OK; tests all heartbeats too!
-        DI_ERROR hb_content_error = no_heartbeat_error(state, msTicks, true); 
+        DI_ERROR hb_content_error = no_heartbeat_errors(state, true); 
         
         if(hb_content_error == ERROR_NONE) {
             Init_Cleanup(state);
@@ -42,7 +42,6 @@ DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
         return ERROR_NONE;
     }
 }
-
 DI_ERROR check_precharge_and_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
     uint32_t tscc = state->time_started_close_contactors_request_ms;
 
@@ -74,7 +73,7 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
         // We started tests for heartbeat existence and content
         
         DI_ERROR hb_presence = all_hb_exist(state, msTicks);
-        DI_ERROR hb_content_error = no_heartbeat_error(state, msTicks, false);
+        DI_ERROR hb_content_error = no_heartbeat_errors(state, false);
         if((hb_presence == ERROR_NONE) && (hb_content_error == ERROR_NONE)) {
             return check_precharge_and_pdm(input, state, output, mode_request, msTicks);
 
@@ -97,3 +96,4 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
         return ERROR_NONE;
     }
 }
+
