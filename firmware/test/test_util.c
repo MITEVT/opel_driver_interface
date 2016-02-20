@@ -80,8 +80,12 @@ TEST(Util_Test, test_initialize_heartbeat_data) {
     TEST_ASSERT_FALSE(pdm_status.critical_systems_battery);
     TEST_ASSERT_FALSE(pdm_status.critical_systems_dcdc);
     
-    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[3]);
-    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[3]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[0]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[0]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[1]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[1]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_error[2]);
+    TEST_ASSERT_FALSE(bms_precharge_status.contactor_output[2]);
     TEST_ASSERT_EQUAL_INT(0, bms_precharge_status.precharge_status);
     // TODO: Add asserts for module status structs contain False/0 (e.g. BMS_PRECHARGE_STATUS, WV_STATUS, etc.) in hb_data
     // TODO Add asserts for UI status!
