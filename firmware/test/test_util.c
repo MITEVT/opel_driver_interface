@@ -261,4 +261,5 @@ TEST_GROUP_RUNNER(Util_Test) {
 	RUN_TEST_CASE(Util_Test, test_turn_all_acc_off);
     // TODO test no_heartbeat_errors
     // TODO test all_hb_exist
+    // TODO Add in checks for BRUSA heartbeats in all of the above functions
 }
