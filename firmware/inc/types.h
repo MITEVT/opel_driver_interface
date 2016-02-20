@@ -100,7 +100,7 @@ typedef struct {
 
 typedef struct {
     bool shutdown_okay;
-    // TODO add motor controller current, and add corresponding checks
+    uint32_t motor_controller_current_mA;
 } MI_STATUS;
 
 typedef struct {
@@ -281,8 +281,9 @@ typedef enum {
     ERROR_UI_SHUTDOWN = 39,
     ERROR_MI_SHUTDOWN = 40,
 
-    ERROR_OPEN_CONTACTOR = 41
-
+    ERROR_OPEN_CONTACTOR = 41,
+    
+    ERROR_VELOCITY_OUT_OF_RANGE = 42
 } DI_ERROR;
 
 typedef enum {

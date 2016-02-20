@@ -19,6 +19,21 @@ void Init_Cleanup(STATE *state) {
     state->time_started_PDM_test_ms = 0;
 }
 
+DI_ERROR no_heartbeat_error(STATE* state){
+    w1_velocity_rpm = state->heartbeat_data->wv1_status->velocity_rpm;
+    w2_velocity_rpm = state->heartbeat_data->wv2_status->velocity_rpm;
+
+    wheel_velocity_range_rpm = 1700;
+
+    if (w1_velocity_rpm != v2_velocity_rpm) {
+        return ERROR_VELOCITIES_NOT_EQUAL;
+    } else if (0 <= w1_velocity_rpm && w1_velocity_rpm <= wheel_velocity_range_rpm){
+        return ERROR_NONE;
+    } else {
+        return ERROR_VELOCITY_OUT_OF_RANGE;
+    }
+}
+
 DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
     uint32_t time_start_pdm = state->time_started_PDM_test_ms;
     if(time_start_pdm != 0) {

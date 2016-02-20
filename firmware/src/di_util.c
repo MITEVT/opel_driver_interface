@@ -455,3 +455,20 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     
     return ERROR_NONE;
 } 
+
+DI_ERROR check_Brakes(STATE* state){
+    uint16_t brake_value = state->heartbeat_data->throttle_status->brake_value;
+    uint32_t motor_current = state->heartbeat_data->mi_status->motor_controller_current_mA;
+
+    uint16_t brake_threshold = 460; //@see THROTTLE_STATUS in types.h
+
+    if (brake_value > brake_threshold && motor_current > 0) { //if brakes are pressed
+        return ERROR_CONTENT_MI_HEARTBEAT;
+    } else {
+        return ERROR_NONE;
+    }
+}
+
+
+
+
