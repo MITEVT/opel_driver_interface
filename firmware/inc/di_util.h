@@ -122,4 +122,12 @@ void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OU
  * @param out_req struct with output hardware requests to be populated by function
  */
 void turn_all_acc_off(ACCESSORIES_OUTPUT_REQUEST *out_req);
+
+//TODO: Add Spec for initliaze_state
+
+/**
+ * 
+*/
+
+void initialize_state(STATE *state);
 #endif

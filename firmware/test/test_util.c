@@ -1,6 +1,8 @@
 #include "types.h"
 #include "di_util.h"
 #include "chip.h"
+#include "unity.h"
+#include "unity_fixture.h"
 
 STATE state;
 HEARTBEAT_DATA hb_data;
@@ -175,11 +177,11 @@ TEST(Util_Test, test_initialize_state){
 
     initialize_state(&state);
 
-    TEST_ASSERT_INT_EQUAL(MODE_OFF, state.dsm_mode);
-    TEST_ASSERT_INT_EQUAL(DRIVE_NEUTRAL, state.direction);
-    TEST_ASSERT_INT_EQUAL(0, state.time_started_init_tests_ms);
-    TEST_ASSERT_INT_EQUAL(0, state.time_started_close_contactors_request_ms);
-    TEST_ASSERT_INT_EQUAL(0, state.time_started_PDM_test_ms); 
+    TEST_ASSERT_EQUAL_INT(MODE_OFF, state.dsm_mode);
+    TEST_ASSERT_EQUAL_INT(DRIVE_NEUTRAL, state.direction);
+    TEST_ASSERT_EQUAL_INT(0, state.time_started_init_tests_ms);
+    TEST_ASSERT_EQUAL_INT(0, state.time_started_close_contactors_request_ms);
+    TEST_ASSERT_EQUAL_INT(0, state.time_started_PDM_tests_ms); 
     TEST_ASSERT_FALSE(state.critical_systems_relay_on);
     TEST_ASSERT_FALSE(state.low_voltage_relay_on);
 
@@ -250,4 +252,4 @@ TEST_GROUP_RUNNER(Util_Test) {
 	RUN_TEST_CASE(Util_Test, test_convert_acc);
 	RUN_TEST_CASE(Util_Test, test_process_input_heartbeat_data);
 	RUN_TEST_CASE(Util_Test, test_turn_all_acc_off);
-
+}
