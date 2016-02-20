@@ -10,7 +10,7 @@
 
 #include "chip.h"
 #include "types.h"
-
+#include "di_util.h"
 /**
  * @details defines the threshold wait time for which we should
  * hear back from all the heartbeats, BMS precharge, and PDM checks
@@ -72,6 +72,9 @@ DI_ERROR check_precharge_and_pdm(INPUT *input, STATE *state, OUTPUT *output, MOD
  * see the PDF in the opel_driver_interface repository /docs folder
  * for pseudocode outline
  */
+
 DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks);
+
+
 
 #endif
