@@ -3,6 +3,8 @@
 #include "di_util.h"
 #include "string.h"
 
+// TODO: Add const tag to each of the fields in this Config_T
+//          and other Config_t in init, charge, etc.
 static uint32_t bms_hb1_threshold_ms; 
 static uint32_t bms_hb2_threshold_ms; 
 static uint32_t bms_hb3_threshold_ms; 

@@ -11,7 +11,6 @@ void Shutdown_Normal_Config(Shutdown_Normal_Config_T *shutdown_config) {
     max_wt_module_shutdown_ms = shutdown_config->max_wait_modules_shutdown_ms;
     max_wt_velocity_check_ms = shutdown_config->max_wait_velocity_check_ms;
     max_wt_contactors_open_ms = shutdown_config->max_wait_contactors_open_ms;
-
 }
 
 void Shutdown_Normal_Cleanup(STATE *state) {
@@ -101,16 +100,16 @@ DI_ERROR no_velocity_error(STATE *state) {
 }
 
 DI_ERROR Shutdown_Normal_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode_request, uint32_t msTicks) {
-    uint32_t time_velocity = state->time_started_velocity_zero_ms;
+    uint32_t tests_started_time = state->time_started_velocity_zero_ms;
 
-    if(time_velocity != 0) {
+    if(tests_started_time != 0) {
         // We started shutdown procedure
         
         DI_ERROR velocity_error = no_velocity_error(state);
         if(velocity_error == ERROR_NONE) {
             return shutdown_ctcr_check(state, output, msTicks);
 
-        } else if(msTicks - time_velocity > max_wt_velocity_check_ms) {
+        } else if(msTicks - tests_started_time > max_wt_velocity_check_ms) {
             return velocity_error;
 
         } else {
