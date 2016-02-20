@@ -14,6 +14,8 @@ static uint32_t ui_hb_threshold_ms;
 static uint32_t mi_hb_threshold_ms; 
 static uint32_t velocity_diff_threshold;
 static uint32_t velocity_max_rpm;
+static uint32_t throttle_max;
+static uint32_t brake_max;
 
 void initialize_state(STATE *state){
     state->dsm_mode = MODE_OFF;
@@ -112,6 +114,8 @@ void Util_Config(Util_Config_T *util_config){
     mi_hb_threshold_ms = util_config->mi_hb_threshold_ms;
     velocity_diff_threshold = util_config->velocity_diff_threshold;
     velocity_max_rpm = util_config->velocity_max_rpm;
+    throttle_max = util_config->throttle_max;
+    brake_max = util_config->brake_max;
 }
 
 DI_ERROR check_velocity_diff(STATE *state) {
@@ -386,6 +390,16 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
 
     uint32_t w1_velocity_rpm = hb_data->wv1_status->velocity_rpm;
     uint32_t w2_velocity_rpm = hb_data->wv2_status->velocity_rpm;
+    uint32_t throttle_val = hb_data->throttle_status->throttle_value;
+    uint32_t brake_val = hb_data->throttle_status->brake_value;
+
+    if(brake_val > brake_max) {
+        return ERROR_BRAKE_OUT_OF_RANGE;
+    }
+
+    if(throttle_val > throttle_max) {
+        return ERROR_THROTTLE_OUT_OF_RANGE;
+    }
 
     if (w1_velocity_rpm > velocity_max_rpm){
         return ERROR_VELOCITY_OUT_OF_RANGE;
