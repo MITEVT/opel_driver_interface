@@ -27,6 +27,7 @@ DI_ERROR check_pdm(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
         
         if(hb_content_error == ERROR_NONE) {
             Init_Cleanup(state);
+            state->critical_systems_relay_on = true;
             return change_mode(input, state, output, mode_request);
 
         } else if (msTicks - time_start_pdm > threshold_wait_time_pdm_ms) {
@@ -74,7 +75,9 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
         
         DI_ERROR hb_presence = all_hb_exist(state, msTicks);
         DI_ERROR hb_content_error = no_heartbeat_errors(state, false);
+
         if((hb_presence == ERROR_NONE) && (hb_content_error == ERROR_NONE)) {
+            state->low_voltage_relay_on = true;
             return check_precharge_and_pdm(input, state, output, mode_request, msTicks);
 
         } else if((hb_presence == ERROR_NONE) && (hb_content_error != ERROR_NONE)) {
@@ -87,12 +90,14 @@ DI_ERROR Init_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mode
             return ERROR_NONE;
         }
 
+        return ERROR_NONE;
     } else {
         // We haven't started tests for heartbeat existence
         output->low_voltage_relay_on = true;
         output->messages->di_packet->ignition = DI_START;
         output->messages->di_packet->mode = OUT_INIT;
         state->time_started_init_tests_ms = msTicks;
+        state->dsm_mode = MODE_INIT;
         return ERROR_NONE;
     }
 }

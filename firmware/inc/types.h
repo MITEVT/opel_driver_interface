@@ -308,7 +308,8 @@ typedef enum {
 
 typedef enum {
     DI_RUN = 0, // Turn on
-    DI_START = 1 // Start contactors
+    DI_START = 1, // Start contactors
+    DI_OFF = 2 // Start contactors
 } DI_PACKET_IGNITION;
 
 typedef enum {
