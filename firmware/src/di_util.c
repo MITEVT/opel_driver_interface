@@ -218,7 +218,6 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->started_heartbeats->mi_heartbeat=false;
     hb_data->started_heartbeats->brusa_heartbeat1=false;
     hb_data->started_heartbeats->brusa_heartbeat2=false;
-
     hb_data->last_rcvd_bms_heartbeat1 = 0;
     hb_data->last_rcvd_bms_heartbeat2 = 0;
     hb_data->last_rcvd_bms_heartbeat3 = 0;

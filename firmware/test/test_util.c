@@ -15,6 +15,7 @@ PDM_STATUS pdm_status;
 RECIEVED_HEARTBEATS started_heartbeats;
 UI_STATUS ui_status;
 MI_STATUS mi_status;
+BRUSA_STATUS brusa_status;
 
 TEST_GROUP(Util_Test);
 
@@ -28,6 +29,7 @@ TEST_SETUP(Util_Test) {
     hb_data.bms_precharge_status = &bms_precharge_status;
     hb_data.throttle_status = &throttle_status;
     hb_data.pdm_status = &pdm_status;
+    hb_data.brusa_status = &brusa_status;
 
     state.heartbeat_data = &hb_data;
 }
@@ -50,15 +52,15 @@ TEST(Util_Test, test_initialize_heartbeat_data) {
     TEST_ASSERT_FALSE(hb_data.started_heartbeats->ui_heartbeat);
     TEST_ASSERT_FALSE(hb_data.started_heartbeats->mi_heartbeat);
 
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat1);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat2);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat3);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_wv1_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_wv2_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_throttle_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_ui_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_mi_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_pdm_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat1);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat2);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_bms_heartbeat3);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_wv1_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_wv2_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_throttle_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_ui_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_mi_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, hb_data.last_rcvd_pdm_heartbeat);
 
     TEST_ASSERT_EQUAL_INT(0, wv1_status.velocity_rpm);
     TEST_ASSERT_EQUAL_INT(0, wv2_status.velocity_rpm);
@@ -89,25 +91,27 @@ TEST(Util_Test, test_initialize_heartbeat_data) {
     TEST_ASSERT_EQUAL_INT(0, bms_precharge_status.precharge_status);
     // TODO: Add asserts for module status structs contain False/0 (e.g. BMS_PRECHARGE_STATUS, WV_STATUS, etc.) in hb_data
     // TODO Add asserts for UI status!
+    // TODO Add asserts for BRUSA status!
+    
 }
 
 TEST(Util_Test, test_convert_acc) {
-	ACCESSORIES_INPUT_STATE acc_in;
-	acc_in.wipers_on = true;
-	acc_in.headlight_switches = HEADLIGHT_ON;
-	acc_in.turn_blinker_switches = LEFT_BLINKER;
+    ACCESSORIES_INPUT_STATE acc_in;
+    acc_in.wipers_on = true;
+    acc_in.headlight_switches = HEADLIGHT_ON;
+    acc_in.turn_blinker_switches = LEFT_BLINKER;
 
-	bool brakes_on = true;
+    bool brakes_on = true;
 
-	ACCESSORIES_OUTPUT_REQUEST out_req;
+    ACCESSORIES_OUTPUT_REQUEST out_req;
 
-	convert_acc(&acc_in, brakes_on, &out_req);
+    convert_acc(&acc_in, brakes_on, &out_req);
 
-	TEST_ASSERT_TRUE(out_req.brake_lights_on);
-	TEST_ASSERT_TRUE(out_req.wipers_on);
+    TEST_ASSERT_TRUE(out_req.brake_lights_on);
+    TEST_ASSERT_TRUE(out_req.wipers_on);
 
-	TEST_ASSERT_EQUAL_INT(HEADLIGHT_ON, out_req.headlight_state);
-	TEST_ASSERT_EQUAL_INT(LEFT_BLINKER, out_req.turn_blinker);
+    TEST_ASSERT_EQUAL_INT(HEADLIGHT_ON, out_req.headlight_state);
+    TEST_ASSERT_EQUAL_INT(LEFT_BLINKER, out_req.turn_blinker);
 }
 
 TEST(Util_Test, test_process_input_heartbeat_data) {
@@ -189,7 +193,7 @@ TEST(Util_Test, test_initialize_state){
     TEST_ASSERT_FALSE(state.critical_systems_relay_on);
     TEST_ASSERT_FALSE(state.low_voltage_relay_on);
 
-	initialize_heartbeat_data(state.heartbeat_data);
+    initialize_heartbeat_data(state.heartbeat_data);
 
     TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->bms_heartbeat1);
     TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->bms_heartbeat2);
@@ -201,15 +205,15 @@ TEST(Util_Test, test_initialize_state){
     TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->ui_heartbeat);
     TEST_ASSERT_FALSE(state.heartbeat_data->started_heartbeats->mi_heartbeat);
 
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat1);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat2);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat3);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_wv1_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_wv2_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_throttle_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_ui_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_mi_heartbeat);
-	TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_pdm_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat1);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat2);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_bms_heartbeat3);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_wv1_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_wv2_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_throttle_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_ui_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_mi_heartbeat);
+    TEST_ASSERT_EQUAL_INT(0, state.heartbeat_data->last_rcvd_pdm_heartbeat);
 
     TEST_ASSERT_EQUAL_INT(0, wv1_status.velocity_rpm);
     TEST_ASSERT_EQUAL_INT(0, wv2_status.velocity_rpm);
@@ -241,24 +245,24 @@ TEST(Util_Test, test_initialize_state){
 }
 
 TEST(Util_Test, test_turn_all_acc_off) {
-	ACCESSORIES_OUTPUT_REQUEST out_req;
+    ACCESSORIES_OUTPUT_REQUEST out_req;
 
-	turn_all_acc_off(&out_req);
+    turn_all_acc_off(&out_req);
 
-	TEST_ASSERT_FALSE(out_req.brake_lights_on);
-	TEST_ASSERT_FALSE(out_req.wipers_on);
-	
-	TEST_ASSERT_EQUAL_INT(HEADLIGHT_OFF, out_req.headlight_state);
-	TEST_ASSERT_EQUAL_INT(BLINKER_OFF, out_req.turn_blinker);
+    TEST_ASSERT_FALSE(out_req.brake_lights_on);
+    TEST_ASSERT_FALSE(out_req.wipers_on);
+    
+    TEST_ASSERT_EQUAL_INT(HEADLIGHT_OFF, out_req.headlight_state);
+    TEST_ASSERT_EQUAL_INT(BLINKER_OFF, out_req.turn_blinker);
 }
 
 
 TEST_GROUP_RUNNER(Util_Test) {
-	RUN_TEST_CASE(Util_Test, test_initialize_heartbeat_data);
-	RUN_TEST_CASE(Util_Test, test_convert_acc);
-	RUN_TEST_CASE(Util_Test, test_process_input_heartbeat_data);
-	RUN_TEST_CASE(Util_Test, test_initialize_state);
-	RUN_TEST_CASE(Util_Test, test_turn_all_acc_off);
+    RUN_TEST_CASE(Util_Test, test_initialize_heartbeat_data);
+    RUN_TEST_CASE(Util_Test, test_convert_acc);
+    RUN_TEST_CASE(Util_Test, test_process_input_heartbeat_data);
+    RUN_TEST_CASE(Util_Test, test_initialize_state);
+    RUN_TEST_CASE(Util_Test, test_turn_all_acc_off);
     // TODO test no_heartbeat_errors
     // TODO test all_hb_exist
     // TODO Add in checks for BRUSA heartbeats in all of the above functions
