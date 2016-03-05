@@ -13,4 +13,16 @@
 
 void process_UART_commands(STATE *state, uint8_t *uart_rx_buffer, uint32_t buf_size);
 
+void read_input_requests(INPUT *inputp);
+
+void handle_error(DI_ERROR error);
+
+void broadcast_heartbeat_message(STATE *state);
+
+void initialize_state_machine_configs(void);
+
+void set_state_machine_configs(void);
+
+void configure_can_reads(void);
+
 #endif

@@ -20,39 +20,7 @@
 #define DI_HEARTBEAT_MSG_OBJ 31
 #define ERROR_MSG_OBJ 30
 
-#define NUM_INP_CAN_IDs 11 // Number of CAN input message types
-
-typedef enum {
-    BMS_HB_idx = 0,
-    BMS_STATUS_idx = 1,
-    BMS_PRECHARGE_idx = 2,
-    THROTTLE_idx = 3,
-    WV1_idx = 4,
-    WV2_idx = 5,
-    PDM_idx = 6,
-    UI_idx = 7,
-    MI_idx = 8,
-    BRUSA1_idx = 9,
-    BRUSA2_idx = 10,
-} INPUT_HEARTBEAT_INDICES;
-
-// ERROR_PACKET__id
-// DI_PACKET__id
-
 extern volatile uint32_t msTicks;
-static uint32_t INPUT_CAN_IDs[NUM_INP_CAN_IDs] = {
-    BMS_HEARTBEAT__id, 
-    PRECHARGE_STATUS__id,
-    OVERALL_PACK_STATUS__id,
-    TI_PACKET__id,
-    WHEEL_VELOCITY_1__id,
-    WHEEL_VELOCITY_2__id,
-    PDM_PACKET__id,
-    UI_PACKET__id,
-    MI_PACKET__id,
-    BRUSA_NLG5_STATUS__id,
-    BRUSA_NLG5_ERRORS__id
-};
 
 static STATE *statep;
 static INPUT *inputp;
@@ -83,15 +51,7 @@ void CAN_error(uint32_t error_info) {
 	can_error_info = error_info;
 }
 
-void configure_CAN_listen(uint8_t msg_obj_num, uint32_t can_id, uint32_t mask) {
-    CCAN_MSG_OBJ_T listen_msg_obj;
-	listen_msg_obj.msgobj = msg_obj_num;
-	listen_msg_obj.mode_id = can_id;
-	listen_msg_obj.mask = mask;
-	LPC_CCAN_API->config_rxmsgobj(&listen_msg_obj);
-}
-
-void startup_routine(void) {
+void chip_startup_routine(void) {
 	// Initialize SysTick Timer to generate millisecond count
 	if (Board_SysTick_Init()) {
 		while(1); // Unrecoverable Error. Hang.
@@ -115,15 +75,6 @@ void startup_routine(void) {
     statep = DSM_Init();
 }
 
-void broadcast_heartbeat_message(uint8_t data[8]) {
-    // TODO
-}
-
-void handle_error(DI_ERROR error){
-    // TODO When we detect a UI_HEARTBEAT error from Init step function, turn on LED
-    // TODO IF WE GET AN ERROR FROM SHUTDOWN NORMAL STEP MAKE SURE TO GO TO SHUTDOWN ERROR
-}
-
 void check_CAN_error(void) {
     if (can_error_flag) {
         Board_UART_Print("CAN Error. Info: ");
@@ -134,23 +85,16 @@ void check_CAN_error(void) {
     }
 }
 
-INPUT *read_input_requests(void) {}
-
 int main(void) {
-    // TODO Call Util initialization
+    chip_startup_routine();
+    configure_can_reads();
+    set_state_machine_configs();
 
-    startup_routine();
-
-    // Listen to heartbeats/regular messages from other modules
-    uint8_t i;
-    for(i = 0; i < NUM_INP_CAN_IDs; i++) {
-        configure_CAN_listen(i, INPUT_CAN_IDs[i], 0xFFFFFFFF);
-    }
 
 	while (1) {
         process_UART_commands(statep, uart_rx_buffer, BUF_SIZE);
 
-        inputp = read_input_requests();
+        read_input_requests(inputp);
         MODE_REQUEST mode_request = get_mode_request(inputp);
 
         DI_ERROR step_error;
@@ -159,5 +103,6 @@ int main(void) {
 
         check_CAN_error();
 	}
+
     return 0;
 }
