@@ -39,16 +39,28 @@ DI_ERROR Charge_Step(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mo
     }
 
     DI_ERROR hb_error_content = no_heartbeat_errors(state, true);
-    if (hb_error_content != ERROR_NONE) {
+    if(hb_error_content != ERROR_NONE) {
         return hb_error_content;
     }
 
     DI_ERROR charge_error = charge_checks(state);
     if(charge_error != ERROR_NONE) {
-        // TODO If MODE_REQUEST IS NOT CHARGE, switch state
-        // else return error
+        
+        if(mode_request == REQ_INIT) {
+            return ERROR_INCONSISTENT_MODE_REQUEST;
+        }
+        
+        if(mode_request != REQ_CHARGE) {
+            Charge_Cleanup(state);
+
+            return change_mode(input, state, output, mode_request);
+        } 
+
+        output->messages->di_packet->mode = OUT_CHARGE;
+        return charge_error;
+    } else {
         return charge_error;
     }
-
+    
     return ERROR_NONE;
 }
