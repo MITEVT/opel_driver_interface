@@ -50,7 +50,7 @@ typedef enum {
     MODE_CHARGE = 3, 
     MODE_DRIVE = 4, 
     MODE_INIT = 5, 
-    MODE_SHUTDOWN = 6
+    MODE_SHUTDOWN = 6 //TODO: decided if shutdown mode is necessary
 } MODE;
 
 typedef struct {
@@ -170,7 +170,7 @@ typedef enum {
     REQ_CHARGE = 2, //Request to Charge
     REQ_DRIVE = 3, //Request to Drive
     REQ_INIT = 4, //Request to Initialize
-    REQ_SHUTDOWN = 5 //Request to Shutdown
+    REQ_SHUTDOWN = 5 //Request to Shutdown (TODO: decide if this is necessary)
 } MODE_REQUEST;
 
 /************************************************
@@ -237,6 +237,7 @@ typedef struct {
     HEADLIGHT_STATE headlight_state; //State of the headlights
     TURN_BLINKER turn_blinker; //State of turn blinkers
     bool brake_lights_on; //State of brake lights
+
 } ACCESSORIES_OUTPUT_REQUEST;
 
 typedef enum {

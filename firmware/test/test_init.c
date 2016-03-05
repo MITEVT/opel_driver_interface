@@ -15,7 +15,6 @@ uint32_t msTicks;
 ACCESSORIES_INPUT_STATE acc_inp;
 INPUT_MESSAGES in_msgs;
 
-STATE state;
 HEARTBEAT_DATA hb_data;
 WV_STATUS wv1_status;
 WV_STATUS wv2_status;
