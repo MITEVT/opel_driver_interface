@@ -39,6 +39,16 @@ void Charge_Cleanup(STATE *state);
 DI_ERROR check_brusa(STATE *state);
 
 /**
+ * @details check that velocity is nonzero and checks the BRUSA heartbeat via
+ *          @see check_brusa
+ *
+ * @param state of the state machine
+ */
+
+DI_ERROR charge_checks(STATE *state);
+
+
+/**
  * @details executes the magic of the initialization procedure
  * see the PDF in the opel_driver_interface repository /docs folder
  * for pseudocode outline
