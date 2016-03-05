@@ -189,24 +189,6 @@ typedef enum {
     PARK = 3
 } DRIVE_CONTROL_LEVER;
 
-typedef enum {
-    HEADLIGHT_OFF = 0,
-    HEADLIGHT_ON = 1,
-    HIGHBEAM_ON = 2
-} HEADLIGHT_STATE;
-
-typedef enum {
-    BLINKER_OFF = 0,
-    LEFT_BLINKER = 1,
-    RIGHT_BLINKER = 2
-} TURN_BLINKER;
-
-typedef struct {
-    bool wipers_on; //State of the wipers
-    HEADLIGHT_STATE headlight_switches; //State of headlights
-    TURN_BLINKER turn_blinker_switches; //State of turn blinkers
-} ACCESSORIES_INPUT_STATE;
-
 typedef struct {
     RECIEVED_HEARTBEATS *recieved_heartbeats;
 
@@ -222,7 +204,6 @@ typedef struct {
 } INPUT_MESSAGES;
 
 typedef struct {
-    ACCESSORIES_INPUT_STATE *acc_input;
     KEYMODES keymodes;
     INPUT_MESSAGES *messages;
     DRIVE_CONTROL_LEVER dcl;
@@ -231,14 +212,6 @@ typedef struct {
 /************************************************
  *              THE OUTPUT TYPES               *
  ***********************************************/
-
-typedef struct {
-    bool wipers_on; //State of da wipers
-    HEADLIGHT_STATE headlight_state; //State of the headlights
-    TURN_BLINKER turn_blinker; //State of turn blinkers
-    bool brake_lights_on; //State of brake lights
-
-} ACCESSORIES_OUTPUT_REQUEST;
 
 typedef enum {
     ERROR_NONE = 0,
@@ -335,7 +308,6 @@ typedef struct {
 } OUTPUT_MESSAGES;
 
 typedef struct {
-    ACCESSORIES_OUTPUT_REQUEST *acc_output;
     OUTPUT_MESSAGES *messages;
     bool low_voltage_relay_on;
     bool critical_systems_relay_on;

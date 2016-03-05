@@ -50,10 +50,8 @@ void initialize_state(STATE *state){
 }
 
 void initialize_output(OUTPUT *output){
-    ACCESSORIES_OUTPUT_REQUEST *acc_out = output->acc_output;
     OUTPUT_MESSAGES *out_msgs = output->messages;
 
-    turn_all_acc_off(acc_out);
     out_msgs->error = ERROR_NONE;
 
     DI_PACKET *di_pkt = out_msgs->di_packet;
@@ -66,13 +64,8 @@ void initialize_output(OUTPUT *output){
 }
 
 void initialize_input(INPUT *input){
-    ACCESSORIES_INPUT_STATE *acc_in = input->acc_input;
     INPUT_MESSAGES *inp_msgs = input->messages;
     RECIEVED_HEARTBEATS *rcvd_hbs = inp_msgs->recieved_heartbeats;
-
-    acc_in->wipers_on = false;
-    acc_in->headlight_switches = HEADLIGHT_OFF;
-    acc_in->turn_blinker_switches = BLINKER_OFF;
 
     rcvd_hbs->bms_heartbeat1 = false;
     rcvd_hbs->bms_heartbeat2 = false;
@@ -342,20 +335,6 @@ void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA
         hb_data->brusa_status->overall_error_reported = input_messages->brusa_status->overall_error_reported;
         hb_data->brusa_status->hardware_on = input_messages->brusa_status->hardware_on;
     }
-}
-
-void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OUTPUT_REQUEST *out_req) {
-    out_req->brake_lights_on = brakes_on;
-    out_req->wipers_on = acc_in->wipers_on;
-    out_req->turn_blinker = acc_in->turn_blinker_switches;
-    out_req->headlight_state = acc_in->headlight_switches;
-}
-
-void turn_all_acc_off(ACCESSORIES_OUTPUT_REQUEST *out_req) {
-    out_req->brake_lights_on = false;
-    out_req->wipers_on = false;
-    out_req->turn_blinker = BLINKER_OFF;
-    out_req->headlight_state = HEADLIGHT_OFF;
 }
 
 DI_ERROR check_bms_precharge(STATE *state) {

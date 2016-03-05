@@ -106,23 +106,6 @@ DI_ERROR change_mode(INPUT *input, STATE *state, OUTPUT *output, MODE_REQUEST mo
 void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data);
 
 /**
- * @details Converts the (requested) state of input accessories 
- * to a request for the corresponding hardware accessories state
- *
- * @param acc_in struct of user-input accessory state requests
- * @param brakes_on bool representing whether brakes should be on (decided not by user, but Throttle Module CAN Message)
- * @param out_req struct with hardware state requests to be populated by function
- */
-void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OUTPUT_REQUEST *out_req);
-
-/**
- * @details Creates a hardware accessories request that turns off all accessories
- *
- * @param out_req struct with output hardware requests to be populated by function
- */
-void turn_all_acc_off(ACCESSORIES_OUTPUT_REQUEST *out_req);
-
-/**
  * @details Checks that velocities (RPM) from both sensors are within [0,1700)
  *
  * @param velocity1_rpm velocity in RPM of wheel velocity sensor 1
