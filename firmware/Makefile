@@ -37,7 +37,7 @@ LINT = oclint
 #=============================================================================#
 
 # project name
-PROJECT = BCM
+PROJECT = DI
 
 # core type
 CORE = cortex-m0
@@ -68,7 +68,7 @@ AS_DEFS = -DRAM_MODE=1
 
 # include directories (absolute or relative paths to additional folders with
 # headers, current folder is always included)
-INC_DIRS_CROSS = ../../lpc11cx4-library/lpc_chip_11cxx_lib/inc ../../lpc11cx4-library/evt_lib/inc inc ../../can_validator/inc/
+INC_DIRS_CROSS = ../../lpc11cx4-library/lpc_chip_11cxx_lib/inc ../../lpc11cx4-library/evt_lib/inc inc ../../can_validator/inc/ 
 
 # library directories (absolute or relative paths to additional folders with
 # libraries)

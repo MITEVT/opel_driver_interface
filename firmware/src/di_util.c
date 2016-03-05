@@ -5,15 +5,15 @@
 
 // TODO: Add const tag to each of the fields in this Config_T
 //          and other Config_t in init, charge, etc.
-static uint32_t bms_hb1_threshold_ms; 
-static uint32_t bms_hb2_threshold_ms; 
-static uint32_t bms_hb3_threshold_ms; 
-static uint32_t throttle_hb_threshold_ms; 
-static uint32_t wv1_hb_threshold_ms; 
-static uint32_t wv2_hb_threshold_ms; 
-static uint32_t pdm_hb_threshold_ms; 
-static uint32_t ui_hb_threshold_ms; 
-static uint32_t mi_hb_threshold_ms; 
+static uint32_t bms_hb1_threshold_ms;
+static uint32_t bms_hb2_threshold_ms;
+static uint32_t bms_hb3_threshold_ms;
+static uint32_t throttle_hb_threshold_ms;
+static uint32_t wv1_hb_threshold_ms;
+static uint32_t wv2_hb_threshold_ms;
+static uint32_t pdm_hb_threshold_ms;
+static uint32_t ui_hb_threshold_ms;
+static uint32_t mi_hb_threshold_ms;
 static uint32_t velocity_diff_threshold;
 static uint32_t velocity_max_rpm;
 static uint32_t throttle_max;
@@ -52,12 +52,12 @@ void initialize_state(STATE *state){
 void initialize_output(OUTPUT *output){
     ACCESSORIES_OUTPUT_REQUEST *acc_out = output->acc_output;
     OUTPUT_MESSAGES *out_msgs = output->messages;
-    
+
     turn_all_acc_off(acc_out);
     out_msgs->error = ERROR_NONE;
-    
+
     DI_PACKET *di_pkt = out_msgs->di_packet;
-    
+
     di_pkt->ignition = DI_START;
     di_pkt->mode = OUT_OFF;
 
@@ -67,7 +67,7 @@ void initialize_output(OUTPUT *output){
 
 void initialize_input(INPUT *input){
     ACCESSORIES_INPUT_STATE *acc_in = input->acc_input;
-    INPUT_MESSAGES *inp_msgs = input->messages;    
+    INPUT_MESSAGES *inp_msgs = input->messages;
     RECIEVED_HEARTBEATS *rcvd_hbs = inp_msgs->recieved_heartbeats;
 
     acc_in->wipers_on = false;
@@ -88,7 +88,7 @@ void initialize_input(INPUT *input){
 
     input->keymodes = KEYMODE_OFF;
     input->dcl = PARK;
-   
+
     inp_msgs->wv1_status->velocity_rpm = 0;
     inp_msgs->wv2_status->velocity_rpm = 0;
 
@@ -206,7 +206,7 @@ MODE_REQUEST get_mode_request(INPUT *input) {
 }
 
 
-void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) { 
+void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->started_heartbeats->bms_heartbeat1=false;
     hb_data->started_heartbeats->bms_heartbeat2=false;
     hb_data->started_heartbeats->bms_heartbeat3=false;
@@ -268,7 +268,7 @@ void initialize_heartbeat_data(HEARTBEAT_DATA *hb_data) {
     hb_data->brusa_status->hardware_on = false;
     hb_data->brusa_status->specific_error_reported = false;
     hb_data->brusa_status->overall_error_reported = false;
-} 
+}
 
 void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA *hb_data, uint32_t msTicks) {
     if(input_messages->recieved_heartbeats->bms_heartbeat1) {
@@ -344,11 +344,11 @@ void process_input_heartbeat_data(INPUT_MESSAGES *input_messages, HEARTBEAT_DATA
     }
 }
 
-void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OUTPUT_REQUEST *out_req) { 
+void convert_acc(ACCESSORIES_INPUT_STATE *acc_in, bool brakes_on, ACCESSORIES_OUTPUT_REQUEST *out_req) {
     out_req->brake_lights_on = brakes_on;
     out_req->wipers_on = acc_in->wipers_on;
     out_req->turn_blinker = acc_in->turn_blinker_switches;
-    out_req->headlight_state = acc_in->headlight_switches;	
+    out_req->headlight_state = acc_in->headlight_switches;
 }
 
 void turn_all_acc_off(ACCESSORIES_OUTPUT_REQUEST *out_req) {
@@ -379,7 +379,7 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
     UI_STATUS *ui_status = hb_data->ui_status;
     BMS_PACK_STATUS *bms_pack_status = hb_data->bms_pack_status;
     PDM_STATUS *pdm_status = hb_data->pdm_status;
-    
+
     if(!ui_status->rasp_pi_on) {
         return ERROR_INIT_UI_HEARTBEAT;
     } else if(bms_pack_status->cells_over_voltage) {
@@ -402,8 +402,8 @@ DI_ERROR no_heartbeat_errors(STATE *state, bool check_pdm_cs) {
         } else {
             return ERROR_LVS_BATTERY_TEST_FAILED;
         }
-    } 
-    
+    }
+
     if(check_pdm_cs) {
         if(pdm_status->critical_systems_status) {
              if(pdm_status->critical_systems_dcdc) {
@@ -462,7 +462,7 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     bool mi_hb = sh->mi_heartbeat;
     bool pdm_hb = sh->pdm_heartbeat;
     bool ui_hb = sh->ui_heartbeat;
-     
+
     if(!bms_hbs) {
         return ERROR_INIT_BMS_HEARTBEAT;
     } else if (!wv1_hb) {
@@ -492,14 +492,14 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     bool timeout_wv1 = (msTicks - last_wv1 > wv1_hb_threshold_ms);
     bool timeout_wv2 = (msTicks - last_wv2 > wv2_hb_threshold_ms);
     bool timeout_mi = (msTicks - last_mi > mi_hb_threshold_ms);
-    bool timeout_ui = (msTicks - last_ui > ui_hb_threshold_ms); 
-    bool timeout_throttle = (msTicks - last_throttle > throttle_hb_threshold_ms); 
-    bool timeout_pdm = (msTicks - last_pdm > pdm_hb_threshold_ms); 
-     
+    bool timeout_ui = (msTicks - last_ui > ui_hb_threshold_ms);
+    bool timeout_throttle = (msTicks - last_throttle > throttle_hb_threshold_ms);
+    bool timeout_pdm = (msTicks - last_pdm > pdm_hb_threshold_ms);
+
     bool timeout_bms_hb1 = msTicks - last_bms1 > bms_hb1_threshold_ms;
     bool timeout_bms_hb2 = msTicks - last_bms2 > bms_hb2_threshold_ms;
     bool timeout_bms_hb3 = msTicks - last_bms3 > bms_hb3_threshold_ms;
-    
+
     if(timeout_bms_hb1 || timeout_bms_hb2 || timeout_bms_hb3) {
         return ERROR_LOST_BMS_HEARTBEAT;
     } else if(timeout_wv1) {
@@ -515,6 +515,6 @@ DI_ERROR all_hb_exist(STATE *state, uint32_t msTicks) {
     } else if(timeout_pdm) {
         return ERROR_LOST_PDM_HEARTBEAT;
     }
-    
+
     return ERROR_NONE;
-} 
+}
