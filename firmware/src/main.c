@@ -59,7 +59,7 @@ void chip_startup_routine(void) {
 
 	// Initialize GPIO and LED as output
 	Board_LEDs_Init();
-	Board_LED_On(LED0);
+	Board_LED_On(LED1);
 
 	// Initialize UART Communication
 	Board_UART_Init(UART_BAUD_RATE);
@@ -89,6 +89,7 @@ int main(void) {
     chip_startup_routine();
     configure_can_reads();
     set_state_machine_configs();
+	Board_LED_On(LED1);
 
 
 	while (1) {
