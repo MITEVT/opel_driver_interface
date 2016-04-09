@@ -36,6 +36,9 @@ int8_t Board_SysTick_Init(void) {
 void Board_LEDs_Init(void) {
 	Chip_GPIO_Init(LPC_GPIO);
 	Chip_GPIO_WriteDirBit(LPC_GPIO, LED0, true);
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED1, true);
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED2, true);
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED3, true);
 }
 
 void Board_UART_Init(uint32_t baudrate) {

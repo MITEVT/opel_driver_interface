@@ -66,6 +66,26 @@ void read_input_requests(INPUT *inputp) {
     // TODO read inputs from hardware and convert that to input request struct
 }
 
+void demo_process_UART_commands(STATE *state, uint8_t *uart_rx_buffer, uint32_t buf_size, CCAN_MSG_OBJ_T msg_obj) {
+    uint8_t count;
+    if ((count = Chip_UART_Read(LPC_USART, uart_rx_buffer, buf_size)) != 0) {
+        switch (uart_rx_buffer[0]) {
+            case 'a':
+                Board_UART_Println("Sending CAN with ID: 0x600");
+                msg_obj.msgobj = 2;
+	            msg_obj.mode_id = 0x600;
+	            msg_obj.mask = 0x7FF;
+                msg_obj.dlc = 1;
+                msg_obj.data[0] = 0xAA;
+                LPC_CCAN_API->can_transmit(&msg_obj);
+                break;
+            default:
+                Board_UART_Println("Invalid Command");
+                break;
+        }
+    }
+}
+
 
 void process_UART_commands(STATE *state, uint8_t *uart_rx_buffer, uint32_t buf_size) {
     uint8_t count;
@@ -144,5 +164,4 @@ void process_UART_commands(STATE *state, uint8_t *uart_rx_buffer, uint32_t buf_s
             }
          }
    }
-
 }

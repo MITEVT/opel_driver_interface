@@ -24,6 +24,12 @@ volatile uint32_t msTicks; 						// Running count of milliseconds since start
 #define LED1_PORT 0
 #define LED1_PIN 6
 
+#define LED2_PORT 0
+#define LED2_PIN 7
+
+#define LED3_PORT 2
+#define LED3_PIN 9
+
 #define UART_RX_PORT 1
 #define UART_RX_PIN 6
 #define UART_RX_IOCON IOCON_PIO1_6
@@ -37,6 +43,8 @@ volatile uint32_t msTicks; 						// Running count of milliseconds since start
 
 #define LED0 LED0_PORT, LED0_PIN
 #define LED1 LED1_PORT, LED1_PIN
+#define LED2 LED2_PORT, LED2_PIN
+#define LED3 LED3_PORT, LED3_PIN
 
 #define UART_RX UART_RX_PORT, UART_RX_PIN
 #define UART_TX UART_TX_PORT, UART_TX_PIN
