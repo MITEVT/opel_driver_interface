@@ -19,7 +19,7 @@ volatile uint32_t msTicks; 						// Running count of milliseconds since start
 // Pin Descriptions
 
 #define LED0_PORT 2
-#define LED0_PIN 9
+#define LED0_PIN 5
 
 #define LED1_PORT 0
 #define LED1_PIN 6
