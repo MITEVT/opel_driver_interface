@@ -69,6 +69,10 @@ void read_input_requests(INPUT *inputp) {
 void demo_process_UART_commands(STATE *state, uint8_t *uart_rx_buffer, uint32_t buf_size, CCAN_MSG_OBJ_T msg_obj) {
     uint8_t count;
     if ((count = Chip_UART_Read(LPC_USART, uart_rx_buffer, buf_size)) != 0) {
+        
+        // echo
+        Board_UART_SendBlocking(uart_rx_buffer, count);
+        
         switch (uart_rx_buffer[0]) {
             case 'a':
                 Board_UART_Println("Sending CAN with ID: 0x600");
