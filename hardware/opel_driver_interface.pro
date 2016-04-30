@@ -1,4 +1,4 @@
-update=Saturday, September 19, 2015 'PMt' 12:09:31 PM
+update=Mon 11 Jan 2016 06:05:16 PM EST
 version=1
 last_client=kicad
 [pcbnew]
@@ -23,8 +23,6 @@ ModuleOutlineThickness=0.150000000000
 [cvpcb]
 version=1
 NetIExt=net
-[general]
-version=1
 [eeschema]
 version=1
 LibDir=../../EVT_KICAD_LIBS
@@ -58,10 +56,12 @@ LibName26=opto
 LibName27=atmel
 LibName28=contrib
 LibName29=valves
-LibName30=/Users/narango/Documents/evt/opel_EE/EVT_KICAD_LIBS/MITEVT_ANALOG
-LibName31=/Users/narango/Documents/evt/opel_EE/EVT_KICAD_LIBS/MITEVT_CONTACTORS
-LibName32=/Users/narango/Documents/evt/opel_EE/EVT_KICAD_LIBS/MITEVT_interface
-LibName33=/Users/narango/Documents/evt/opel_EE/EVT_KICAD_LIBS/MITEVT_mcontrollers
-LibName34=/Users/narango/Documents/evt/opel_EE/EVT_KICAD_LIBS/MITEVT_OPTO
-LibName35=/Users/narango/Documents/evt/opel_EE/EVT_KICAD_LIBS/MITEVT_power
-LibName36=/Users/narango/Documents/evt/opel_EE/EVT_KICAD_LIBS/MITEVT_REG
+LibName30=MITEVT_ANALOG
+LibName31=MITEVT_CONTACTORS
+LibName32=MITEVT_interface
+LibName33=MITEVT_mcontrollers
+LibName34=MITEVT_OPTO
+LibName35=MITEVT_power
+LibName36=MITEVT_REG
+[general]
+version=1
