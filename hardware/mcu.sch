@@ -35,7 +35,6 @@ LIBS:MITEVT_mcontrollers
 LIBS:MITEVT_OPTO
 LIBS:MITEVT_power
 LIBS:MITEVT_REG
-LIBS:final_outline-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -344,9 +343,7 @@ Wire Wire Line
 Wire Wire Line
 	4650 3950 4950 3950
 Wire Wire Line
-	4650 3350 4950 3350
-Wire Wire Line
-	4650 3450 4950 3450
+	4200 3450 4950 3450
 Wire Wire Line
 	4650 3550 4950 3550
 Wire Wire Line
@@ -481,8 +478,6 @@ NoConn ~ 4950 5050
 NoConn ~ 4950 5150
 NoConn ~ 4950 5250
 NoConn ~ 7600 4850
-NoConn ~ 4650 3350
-NoConn ~ 4650 3450
 NoConn ~ 4650 3550
 NoConn ~ 4650 3650
 NoConn ~ 4650 3850
@@ -499,4 +494,10 @@ NoConn ~ 8000 3600
 NoConn ~ 8000 3500
 NoConn ~ 8000 3400
 NoConn ~ 8000 3300
+Wire Wire Line
+	4200 3350 4950 3350
+Text HLabel 4200 3350 0    60   Input ~ 0
+CAR_ON
+Text HLabel 4200 3450 0    60   Output ~ 0
+LV_ON
 $EndSCHEMATC
