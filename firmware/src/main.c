@@ -1,4 +1,6 @@
 #include "board.h"
+#include "stdlib.h"
+#include "can.h"
 
 // -------------------------------------------------------------
 // Macro Definitions
@@ -12,15 +14,11 @@
 
 extern volatile uint32_t msTicks;
 
-static CCAN_MSG_OBJ_T msg_obj; 					// Message Object data structure for manipulating CAN messages
-static RINGBUFF_T can_rx_buffer;				// Ring Buffer for storing received CAN messages
-static CCAN_MSG_OBJ_T _rx_buffer[BUFFER_SIZE]; 	// Underlying array used in ring buffer
+static CCAN_MSG_OBJ_T rx_msg; 	                // Message Object data structure for manipulating CAN messages
 
 static char str[100];							// Used for composing UART messages
 static uint8_t uart_rx_buffer[BUFFER_SIZE]; 	// UART received message buffer
 
-static bool can_error_flag;
-static uint32_t can_error_info;
 static uint32_t last_message;
 
 static uint8_t DI_CTRL;
@@ -96,53 +94,18 @@ inline static void displayData(void){
 	}
 }
 
-inline static void sendDIMessage(void){
-	msg_obj.msgobj = 2;
-	msg_obj.mode_id = 0x505;
-	msg_obj.dlc = 4;
-	if((DI_CTRL&KEY_IGNITION_BITS)==KEY_IGNITION_OFF){
-		msg_obj.data_16[0] = 0;
-	}
-	else if ((DI_CTRL&KEY_IGNITION_BITS)==KEY_IGNITION_RUN){
-		msg_obj.data_16[0] = 0x020;
-	}
-	else if ((DI_CTRL&KEY_IGNITION_BITS)==KEY_IGNITION_START){
-		msg_obj.data_16[0] = 0x040;
-	}
-	else{
-		DI_CTRL = 0xFF;
-	}
-	if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_PARKED){
-		msg_obj.data_16[1] = 0;
-	}	
-	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_FORWARD){
-		msg_obj.data_16[1] = 0x00F0;
-	}
-	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_REVERSE){
-		msg_obj.data_16[1] = 0x0030;
-	}
-	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_SHUTDOWN_IMPENDING){
-		msg_obj.data_16[1] = 0x0F00;
-	}
-	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_INIT){
-		msg_obj.data_16[1] = 0x0300;
-	}
-	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_INIT){
-		msg_obj.data_16[1] = 0xF000;
-	}
-	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_INIT){
-		msg_obj.data_16[1] = 0x3000;
-	}
-	else{
-		DI_CTRL = 0xFF;
-	}
-	if(DI_CTRL == 0xFF){
-		Board_UART_Println("SEVERE ERROR : Unknown State!");
-		msg_obj.data_16[0]=1;
-		msg_obj.data_16[1] = 0x0F00;
-	}
-	LPC_CCAN_API->can_transmit(&msg_obj);			
-}	
+static void Print_Buffer(uint8_t* buff, uint8_t buff_size) {
+    Chip_UART_SendBlocking(LPC_USART, "0x", 2);
+    uint8_t i;
+    for(i = 0; i < buff_size; i++) {
+        itoa(buff[i], str, 16);
+        if(buff[i] < 16) {
+            Chip_UART_SendBlocking(LPC_USART, "0", 1);
+        }
+        Chip_UART_SendBlocking(LPC_USART, str, 2);
+    }
+}
+
 
 // -------------------------------------------------------------
 // Main Program Loop
@@ -150,6 +113,7 @@ inline static void sendDIMessage(void){
 int main(void)
 {
 	DI_CTRL=0;
+
 
 	//---------------
 	// Initialize UART Communication
@@ -168,75 +132,42 @@ int main(void)
 	// Initialize GPIO and LED as output
 	Board_LEDs_Init();
 	LED_On(2,10);
-//	Board_Contactors_Init();
-
-	//---------------
-	// Initialize CAN  and CAN Ring Buffer
 
 	CAN_Init(CCAN_BAUD_RATE);
 
-	can_error_flag = false;
-	can_error_info = 0;
 	last_message = msTicks;
 	last_update = msTicks;
 	
-	while (1) {
-		if (last_message<(msTicks-10000)) {
-			last_message = msTicks;
-			Board_UART_Println("Sending CAN with ID: 0x505");
-			msg_obj.msgobj = 2;
-			msg_obj.mode_id = 0x505;
-			msg_obj.dlc = 2;
-			msg_obj.data_16[0] = 0x40;
-			msg_obj.data_16[1] = 0x00;
-			Board_UART_PrintNum(msg_obj.data_16[0],16,true);
-			Board_UART_PrintNum(msg_obj.data_16[1],16,true);
-			LPC_CCAN_API->can_transmit(&msg_obj);		
-		}
-/*		if(last_message<msTicks-100){
-			last_message = msTicks;
-			sendDIMessage();
-			displayData();
-		}
-		if(last_update<msTicks-10){
-			last_update = msTicks;
-			Board_State_Contactor_Update(&DI_CTRL);	
-			if((DI_CTRL & CONTACTOR_PRECHARGE_CTRL_BIT)==0){
-				Board_Contactor_Controls_Precharge_Closed();
-			}
-			else{
-				Board_Contactor_Controls_Precharge_Open();
-			}
-			if((DI_CTRL & CONTACTOR_LOW_CTRL_BIT)==0){
-				Board_Contactor_Controls_Low_Closed();
-			}
-			else{
-				Board_Contactor_Controls_Low_Open();
-			}
-		}*/
-		if (!RingBuffer_IsEmpty(&can_rx_buffer)) {
-			CCAN_MSG_OBJ_T temp_msg;
-			CAN_Receive(temp_msg);
-			Board_UART_Print("Received Message ID: 0x");
-			Board_UART_PrintNum(temp_msg.mode_id,16,true);
-			Board_UART_PrintNum(temp_msg.data[0],16,true);
-			Board_UART_PrintNum(temp_msg.data[1],16,true);	
-/*			if(temp_msg.mode_id == 0x705){
-				motor_shutdown_ok = (temp_msg.data[0] & 0x80 > 0);
-				motor_state = ((temp_msg.data[0] >>4) & 7);
-				motor_current = ((temp_msg.data[1] << 8) & 0xFF00) | (temp_msg.data[2]);
-				motor_speed = ((temp_msg.data[3] << 4) & 0xFF0) | ((temp_msg.data[4] >> 4) & 0xF);
-				HV_Voltage = ((temp_msg.data[4] << 8) & 0xF00) | (temp_msg.data[5]);
-				motor_torque = ((temp_msg.data[6]<<8) & 0xFF00) | temp_msg.data[7];
-			}*/
-		}	
+    uint8_t data[2] = {0x40, 0xAA};
+	uint32_t ret;
 
-		if (can_error_flag) {
-			can_error_flag = false;
-			Board_UART_Print("[CAN Error: 0b");
-			Board_UART_PrintNum(can_error_info,2,false);
-			Board_UART_Println("]");
+	while (1) {
+		if (last_message < msTicks) {
+			last_message = msTicks + 2000;
+			Board_UART_Println("Sending CAN with ID: 0x505");
+            // TO FILL IN PROPERLY with 
+            data[0] = DI_CTRL;
+            CAN_Transmit(0x505, data, 2);
 		}
+
+		if (msTicks % 2000 == 0){
+            ret = CAN_Receive(&rx_msg);
+            if(ret == NO_RX_CAN_MESSAGE) {
+                Board_UART_Println("No CAN message received...");
+            } else if(ret == NO_CAN_ERROR) {
+                Board_UART_Println("Recieved data ");
+                Print_Buffer(rx_msg.data, rx_msg.dlc);
+                Board_UART_Println(" from ");
+                itoa(rx_msg.mode_id, str, 16);
+                Board_UART_Println(str);
+                Board_UART_Println("\r\n");
+            } else {
+                Board_UART_Println("CAN Error: ");
+                itoa(ret, str, 2);
+                Board_UART_Println(str);
+                Board_UART_Println("\r\n");
+            }
+        }
 
 		uint8_t count;
 		if ((count = Board_UART_Read(uart_rx_buffer, BUFFER_SIZE)) != 0) {
