@@ -11,13 +11,6 @@ void SysTick_Handler(void) {
 	msTicks++;
 }
 
-/**
- * CCAN Interrupt Handler. Calls the isr() API located in the CCAN ROM
- */
-void CAN_IRQHandler(void) {
-	LPC_CCAN_API->isr();
-}
-
 // -------------------------------------------------------------
 // Public Functions and Members
 
@@ -35,10 +28,11 @@ int8_t Board_SysTick_Init(void) {
 
 void Board_LEDs_Init(void) {
 	Chip_GPIO_Init(LPC_GPIO);
-	Chip_GPIO_WriteDirBit(LPC_GPIO, LED0, true);
-	Chip_GPIO_WriteDirBit(LPC_GPIO, LED1, true);
-	Chip_GPIO_WriteDirBit(LPC_GPIO, LED2, true);
-	Chip_GPIO_WriteDirBit(LPC_GPIO, LED3, true);
+	Chip_GPIO_WriteDirBit(LPC_GPIO,2,10, true);
+}
+
+void LED_On(int port,int pin) {
+	Chip_GPIO_SetPinState(LPC_GPIO,port,pin,true);
 }
 
 void Board_UART_Init(uint32_t baudrate) {
@@ -76,88 +70,37 @@ int8_t Board_UART_Read(void *data, uint8_t num_bytes) {
 	return Chip_UART_Read(LPC_USART, data, num_bytes);
 }
 
-void CAN_baudrate_calculate(uint32_t baud_rate, uint32_t *can_api_timing_cfg)
-{
-	uint32_t pClk, div, quanta, segs, seg1, seg2, clk_per_bit, can_sjw;
-	Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_CAN);
-	pClk = Chip_Clock_GetMainClockRate();
+void Board_Contactors_Init(void){
+	Chip_GPIO_WriteDirBit(LPC_GPIO, CONTACTOR_PRECHARGE_SWITCH, false);
+	Chip_GPIO_WriteDirBit(LPC_GPIO, CONTACTOR_LOW_SWITCH, false);
+	Chip_GPIO_WriteDirBit(LPC_GPIO, CONTACTOR_PRECHARGE_CTRL, true);
+	Chip_GPIO_WriteDirBit(LPC_GPIO, CONTACTOR_LOW_CTRL, true);
+}
 
-	clk_per_bit = pClk / baud_rate;
+void Board_Contactor_Controls_Precharge_Open(void){
+	Chip_GPIO_SetPinState(LPC_GPIO,CONTACTOR_PRECHARGE_CTRL,false);
+}
 
-	for (div = 0; div <= 15; div++) {
-		for (quanta = 1; quanta <= 32; quanta++) {
-			for (segs = 3; segs <= 17; segs++) {
-				if (clk_per_bit == (segs * quanta * (div + 1))) {
-					segs -= 3;
-					seg1 = segs / 2;
-					seg2 = segs - seg1;
-					can_sjw = seg1 > 3 ? 3 : seg1;
-					can_api_timing_cfg[0] = div;
-					can_api_timing_cfg[1] =
-						((quanta - 1) & 0x3F) | (can_sjw & 0x03) << 6 | (seg1 & 0x0F) << 8 | (seg2 & 0x07) << 12;
-					return;
-				}
-			}
-		}
+void Board_Contactor_Controls_Low_Open(void){
+	Chip_GPIO_SetPinState(LPC_GPIO,CONTACTOR_LOW_CTRL,false);
+}
+
+void Board_Contactor_Controls_Precharge_Closed(void){
+	Chip_GPIO_SetPinState(LPC_GPIO,CONTACTOR_PRECHARGE_CTRL,true);
+}
+
+void Board_Contactor_Controls_Low_Closed(void){
+	Chip_GPIO_SetPinState(LPC_GPIO,CONTACTOR_LOW_CTRL,true);
+}
+
+void Board_State_Contactor_Update(uint8_t *state){
+	uint8_t contactors = 0;
+	if(Chip_GPIO_GetPinState(LPC_GPIO,CONTACTOR_PRECHARGE_SWITCH)){
+		contactors |= CONTACTOR_PRECHARGE_CTRL_BIT;
 	}
+	if(Chip_GPIO_GetPinState(LPC_GPIO,CONTACTOR_LOW_SWITCH)){
+		contactors |= CONTACTOR_LOW_CTRL_BIT;
+	}
+	*state = ((*state & (~CONTACTOR_CTRL_BITS)) | contactors);
 }
 
-void Board_CAN_Init(uint32_t baudrate, void (*rx_callback)(uint8_t), void (*tx_callback)(uint8_t), void (*error_callback)(uint32_t)) {
-
-	uint32_t can_api_timing_cfg[2];
-	
-	CCAN_CALLBACKS_T callbacks = {
-		rx_callback,
-		tx_callback,
-		error_callback,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-	};
-
-	CAN_baudrate_calculate(baudrate, can_api_timing_cfg);
-
-	/* Initialize the CAN controller */
-	LPC_CCAN_API->init_can(&can_api_timing_cfg[0], TRUE);
-	/* Configure the CAN callback functions */
-	LPC_CCAN_API->config_calb(&callbacks);
-
-	/* Enable the CAN Interrupt */
-	NVIC_EnableIRQ(CAN_IRQn);
-}
-
-static ADC_CLOCK_SETUP_T adc_setup;
-
-void Board_ADC_Init() {
-	Chip_IOCON_PinMuxSet(LPC_IOCON, IOCON_PIO0_11, IOCON_FUNC2|IOCON_ADMODE_EN|(!IOCON_HYS_EN)|IOCON_MODE_INACT);
-	Chip_IOCON_PinMuxSet(LPC_IOCON, IOCON_PIO1_0, IOCON_FUNC2|IOCON_ADMODE_EN|(!IOCON_HYS_EN)|IOCON_MODE_INACT);
-    Chip_ADC_Init(LPC_ADC, &adc_setup);
-}
-
-uint16_t Board_TPS_1_ADC_Read(uint16_t *adc_data) {
-	/* Enable this channel and disable all others (because burst mode not enabled) */
-	Chip_ADC_EnableChannel(LPC_ADC, ADC_CH1, DISABLE);
-	Chip_ADC_EnableChannel(LPC_ADC, ADC_CH0, ENABLE);
-	/* Start A/D conversion */
-    Chip_ADC_SetStartMode(LPC_ADC, ADC_START_NOW, ADC_TRIGGERMODE_RISING);
-
-    /* Waiting for A/D conversion complete */
-    while (!Chip_ADC_ReadStatus(LPC_ADC, ADC_CH0, ADC_DR_DONE_STAT)) {}
-    /* Read ADC value */
-    Chip_ADC_ReadValue(LPC_ADC, ADC_CH0, adc_data);
-}
-
-uint16_t Board_TPS_2_ADC_Read(uint16_t *adc_data) {
-	/* Enable this channel and disable all others (because burst mode not enabled) */
-	Chip_ADC_EnableChannel(LPC_ADC, ADC_CH0, DISABLE);
-	Chip_ADC_EnableChannel(LPC_ADC, ADC_CH1, ENABLE);
-	/* Start A/D conversion */
-    Chip_ADC_SetStartMode(LPC_ADC, ADC_START_NOW, ADC_TRIGGERMODE_RISING);
-
-    /* Waiting for A/D conversion complete */
-    while (!Chip_ADC_ReadStatus(LPC_ADC, ADC_CH1, ADC_DR_DONE_STAT)) {}
-    /* Read ADC value */
-    Chip_ADC_ReadValue(LPC_ADC, ADC_CH1, adc_data);
-}

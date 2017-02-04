@@ -1,114 +1,281 @@
-#include "chip.h"
 #include "board.h"
-#include "util.h"
-#include "dsm.h"
-#include "main_helper.h"
-#include "can_spec_constants.h"
 
-#define CCAN_BAUD_RATE 500000
-#define UART_BAUD_RATE 9600
+// -------------------------------------------------------------
+// Macro Definitions
 
-#define BUF_SIZE 8
-#define UART_RX_BUFFER_SIZE 8
+#define CCAN_BAUD_RATE 500000 					// Desired CAN Baud Rate
 
-#define DI_HEARTBEAT_MSG_OBJ 31
-#define ERROR_MSG_OBJ 30
+#define BUFFER_SIZE 8
+
+// -------------------------------------------------------------
+// Static Variable Declaration
 
 extern volatile uint32_t msTicks;
 
-static CCAN_MSG_OBJ_T msg_obj;
-static CCAN_MSG_OBJ_T _rx_buffer[BUF_SIZE];
-static RINGBUFF_T CAN_rx_buffer;
+static CCAN_MSG_OBJ_T msg_obj; 					// Message Object data structure for manipulating CAN messages
+static RINGBUFF_T can_rx_buffer;				// Ring Buffer for storing received CAN messages
+static CCAN_MSG_OBJ_T _rx_buffer[BUFFER_SIZE]; 	// Underlying array used in ring buffer
 
-static STATE *statep;
-static INPUT *inputp;
-static OUTPUT *outputp;
-
-static char str[100];
-static char uart_rx_buf[UART_RX_BUFFER_SIZE];
+static char str[100];							// Used for composing UART messages
+static uint8_t uart_rx_buffer[BUFFER_SIZE]; 	// UART received message buffer
 
 static bool can_error_flag;
 static uint32_t can_error_info;
+static uint32_t last_message;
 
-void CAN_rx(uint8_t msg_obj_num) {
-	msg_obj.msgobj = msg_obj_num;
-	LPC_CCAN_API->can_receive(&msg_obj);
-	if (msg_obj_num == 1) {
-		RingBuffer_Insert(&CAN_rx_buffer, &msg_obj);
+static uint8_t DI_CTRL;
+static uint32_t last_update;
+
+static uint8_t motor_state;
+static int16_t motor_current;
+static int16_t motor_speed;
+static uint16_t HV_Voltage;
+static int16_t motor_torque;
+static bool motor_shutdown_ok;
+
+// -----------------------------------------
+// Helper Functions
+
+/**
+ * Delay the processor for a given number of milliseconds
+ * @param ms Number of milliseconds to delay
+ */
+void _delay(uint32_t ms) {
+	uint32_t curTicks = msTicks;
+	while ((msTicks - curTicks) < ms);
+}
+
+inline static void displayData(void){
+	Board_UART_Print("[Motor current:");
+	Board_UART_PrintNum(motor_current,10,false);
+	Board_UART_Println("]");
+	Board_UART_Print("[Motor Speed:");
+	Board_UART_PrintNum(motor_speed,10,false);
+	Board_UART_Println("]");
+	Board_UART_Print("[High Voltage:");
+	Board_UART_PrintNum(HV_Voltage,10,false);
+	Board_UART_Println("]");
+	Board_UART_Print("[Motor Torque:");
+	Board_UART_PrintNum(motor_torque,10,false);
+	Board_UART_Println("]");
+	Board_UART_Print("[Motor Shutdown OK:");
+	if(motor_shutdown_ok){
+		Board_UART_Println("True]");
+	}
+	else{
+		Board_UART_Println("False]");
+	}
+	Board_UART_Print("[Motor State:");
+	switch(motor_state){
+		case (0):
+			Board_UART_Println("Powerup]");
+			break;
+		case (1):
+			Board_UART_Println("Disabled]");
+			break;
+		case (3):
+			Board_UART_Println("Enabled]");
+			break;
+		case (2):
+			Board_UART_Println("Standby]");
+			break;
+		case (4):
+			Board_UART_Println("Powerdown]");
+			break;
+		case (5):
+			Board_UART_Println("Fault]");
+			break;
+		case (6):
+			Board_UART_Println("Critical Fault]");
+			break;
+		case (7):
+			Board_UART_Println("Off]");
+			break;
+		default:
+			Board_UART_Println("Unknown]");
 	}
 }
 
-void CAN_tx(uint8_t msg_obj_num) {
-	msg_obj_num = msg_obj_num;
-}
+inline static void sendDIMessage(void){
+	msg_obj.msgobj = 2;
+	msg_obj.mode_id = 0x505;
+	msg_obj.dlc = 4;
+	if((DI_CTRL&KEY_IGNITION_BITS)==KEY_IGNITION_OFF){
+		msg_obj.data_16[0] = 0;
+	}
+	else if ((DI_CTRL&KEY_IGNITION_BITS)==KEY_IGNITION_RUN){
+		msg_obj.data_16[0] = 0x020;
+	}
+	else if ((DI_CTRL&KEY_IGNITION_BITS)==KEY_IGNITION_START){
+		msg_obj.data_16[0] = 0x040;
+	}
+	else{
+		DI_CTRL = 0xFF;
+	}
+	if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_PARKED){
+		msg_obj.data_16[1] = 0;
+	}	
+	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_FORWARD){
+		msg_obj.data_16[1] = 0x00F0;
+	}
+	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_REVERSE){
+		msg_obj.data_16[1] = 0x0030;
+	}
+	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_SHUTDOWN_IMPENDING){
+		msg_obj.data_16[1] = 0x0F00;
+	}
+	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_INIT){
+		msg_obj.data_16[1] = 0x0300;
+	}
+	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_INIT){
+		msg_obj.data_16[1] = 0xF000;
+	}
+	else if((DI_CTRL&DRIVE_STATUS_BITS)==DRIVE_STATUS_INIT){
+		msg_obj.data_16[1] = 0x3000;
+	}
+	else{
+		DI_CTRL = 0xFF;
+	}
+	if(DI_CTRL == 0xFF){
+		Board_UART_Println("SEVERE ERROR : Unknown State!");
+		msg_obj.data_16[0]=1;
+		msg_obj.data_16[1] = 0x0F00;
+	}
+	LPC_CCAN_API->can_transmit(&msg_obj);			
+}	
 
-void CAN_error(uint32_t error_info) {
-	can_error_flag = true;
-	can_error_info = error_info;
-}
+// -------------------------------------------------------------
+// Main Program Loop
 
-void check_CAN_error(void) {
-    if (can_error_flag) {
-        Board_UART_Print("CAN Error. Info: ");
-        can_error_flag = false;
+int main(void)
+{
+	DI_CTRL=0;
 
-        itoa(can_error_info, str, 2);
-        Board_UART_Println(str);
-    }
-}
+	//---------------
+	// Initialize UART Communication
+	Board_UART_Init(UART_BAUD);
+	Board_UART_Println("Started up");
 
-void chip_startup_routine(void) {
-	SystemCoreClockUpdate();
+	//---------------
 	// Initialize SysTick Timer to generate millisecond count
 	if (Board_SysTick_Init()) {
-		while(1); // Unrecoverable Error. Hang.
+		Board_UART_Println("Failed to Initialize SysTick. ");
+		// Unrecoverable Error. Hang.
+		while(1);
 	}
 
-	// Initialize UART Communication
-	Board_UART_Init(UART_BAUD_RATE);
-	Board_UART_Println("Started up driver interface!");
-
+	//---------------
 	// Initialize GPIO and LED as output
 	Board_LEDs_Init();
-	Board_LED_On(LED0);
-	Board_LED_On(LED1);
+	LED_On(2,10);
+//	Board_Contactors_Init();
 
+	//---------------
 	// Initialize CAN  and CAN Ring Buffer
-	RingBuffer_Init(&CAN_rx_buffer, _rx_buffer, sizeof(CCAN_MSG_OBJ_T), BUF_SIZE);
-	RingBuffer_Flush(&CAN_rx_buffer);
 
-	Board_CAN_Init(CCAN_BAUD_RATE, CAN_rx, CAN_tx, CAN_error);
+	CAN_Init(CCAN_BAUD_RATE);
+
 	can_error_flag = false;
 	can_error_info = 0;
-}
-
-int main(void) {
-    chip_startup_routine();
-
-    configure_can_reads();
-    statep = DSM_Init();
-    set_state_machine_configs();
-
+	last_message = msTicks;
+	last_update = msTicks;
+	
 	while (1) {
-		if (!RingBuffer_IsEmpty(&CAN_rx_buffer)) {
+		if (last_message<(msTicks-10000)) {
+			last_message = msTicks;
+			Board_UART_Println("Sending CAN with ID: 0x505");
+			msg_obj.msgobj = 2;
+			msg_obj.mode_id = 0x505;
+			msg_obj.dlc = 2;
+			msg_obj.data_16[0] = 0x40;
+			msg_obj.data_16[1] = 0x00;
+			Board_UART_PrintNum(msg_obj.data_16[0],16,true);
+			Board_UART_PrintNum(msg_obj.data_16[1],16,true);
+			LPC_CCAN_API->can_transmit(&msg_obj);		
+		}
+/*		if(last_message<msTicks-100){
+			last_message = msTicks;
+			sendDIMessage();
+			displayData();
+		}
+		if(last_update<msTicks-10){
+			last_update = msTicks;
+			Board_State_Contactor_Update(&DI_CTRL);	
+			if((DI_CTRL & CONTACTOR_PRECHARGE_CTRL_BIT)==0){
+				Board_Contactor_Controls_Precharge_Closed();
+			}
+			else{
+				Board_Contactor_Controls_Precharge_Open();
+			}
+			if((DI_CTRL & CONTACTOR_LOW_CTRL_BIT)==0){
+				Board_Contactor_Controls_Low_Closed();
+			}
+			else{
+				Board_Contactor_Controls_Low_Open();
+			}
+		}*/
+		if (!RingBuffer_IsEmpty(&can_rx_buffer)) {
 			CCAN_MSG_OBJ_T temp_msg;
-			RingBuffer_Pop(&CAN_rx_buffer, &temp_msg);
+			CAN_Receive(temp_msg);
 			Board_UART_Print("Received Message ID: 0x");
-			itoa(temp_msg.mode_id, str, 16);
-			Board_UART_Println(str);
+			Board_UART_PrintNum(temp_msg.mode_id,16,true);
+			Board_UART_PrintNum(temp_msg.data[0],16,true);
+			Board_UART_PrintNum(temp_msg.data[1],16,true);	
+/*			if(temp_msg.mode_id == 0x705){
+				motor_shutdown_ok = (temp_msg.data[0] & 0x80 > 0);
+				motor_state = ((temp_msg.data[0] >>4) & 7);
+				motor_current = ((temp_msg.data[1] << 8) & 0xFF00) | (temp_msg.data[2]);
+				motor_speed = ((temp_msg.data[3] << 4) & 0xFF0) | ((temp_msg.data[4] >> 4) & 0xF);
+				HV_Voltage = ((temp_msg.data[4] << 8) & 0xF00) | (temp_msg.data[5]);
+				motor_torque = ((temp_msg.data[6]<<8) & 0xFF00) | temp_msg.data[7];
+			}*/
 		}	
-        
-        read_input_requests(inputp);
-        // MODE_REQUEST mode_request = get_mode_request(inputp);
 
-        DI_ERROR step_error;
-        // step_error = DSM_Step(inputp, statep, outputp, mode_request, msTicks);
-        handle_error(step_error);
+		if (can_error_flag) {
+			can_error_flag = false;
+			Board_UART_Print("[CAN Error: 0b");
+			Board_UART_PrintNum(can_error_info,2,false);
+			Board_UART_Println("]");
+		}
 
-        demo_process_UART_commands(statep, uart_rx_buf, UART_RX_BUFFER_SIZE, msg_obj);
-
-        check_CAN_error();
+		uint8_t count;
+		if ((count = Board_UART_Read(uart_rx_buffer, BUFFER_SIZE)) != 0) {
+			Board_UART_SendBlocking(uart_rx_buffer, count); // Echo user input
+			switch (uart_rx_buffer[0]) {
+				case '1':
+					DI_CTRL = (DI_CTRL & ~KEY_IGNITION_BITS)|KEY_IGNITION_RUN;
+					break;
+				case '2':
+					DI_CTRL = (DI_CTRL & ~KEY_IGNITION_BITS)|KEY_IGNITION_START;
+					break;
+				case '0':
+					DI_CTRL = (DI_CTRL & ~KEY_IGNITION_BITS)|KEY_IGNITION_OFF;
+					break;
+				case 'p':
+					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_PARKED;
+					break;
+				case 'f':
+					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_FORWARD;
+					break;
+				case 'r':
+					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_REVERSE;
+					break;
+				case 's':
+					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_SHUTDOWN_IMPENDING;
+					break;
+				case 'i':
+					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_INIT;
+					break;
+				case 'c':
+					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_CHARGE;
+					break;
+				case 'o':
+					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_OFF;
+					break;
+				default:
+					Board_UART_Println("Invalid Command");
+					break;
+			}
+		}
 	}
-
-    return 0;
 }
