@@ -20,6 +20,8 @@ static char str[100];							// Used for composing UART messages
 static uint8_t uart_rx_buffer[BUFFER_SIZE]; 	// UART received message buffer
 
 static uint32_t last_message;
+static bool can_error_flag;
+static uint32_t can_error_info;
 
 static uint8_t DI_CTRL;
 static uint32_t last_update;
@@ -135,11 +137,16 @@ int main(void)
 
 	CAN_Init(CCAN_BAUD_RATE);
 
+	uint32_t ret;
+	uint32_t reset_can_peripheral_time;
+	const uint32_t can_error_delay = 5000;
+	bool reset_can_peripheral = false;
+	can_error_flag = false;
+	can_error_info = 0;
 	last_message = msTicks;
 	last_update = msTicks;
 	
     uint8_t data[2] = {0x40, 0xAA};
-	uint32_t ret;
 
 	while (1) {
 		if (last_message < msTicks) {
@@ -150,24 +157,34 @@ int main(void)
             CAN_Transmit(0x505, data, 2);
 		}
 
-		if (msTicks % 2000 == 0){
-            ret = CAN_Receive(&rx_msg);
-            if(ret == NO_RX_CAN_MESSAGE) {
-                Board_UART_Println("No CAN message received...");
-            } else if(ret == NO_CAN_ERROR) {
-                Board_UART_Println("Recieved data ");
-                Print_Buffer(rx_msg.data, rx_msg.dlc);
-                Board_UART_Println(" from ");
-                itoa(rx_msg.mode_id, str, 16);
-                Board_UART_Println(str);
-                Board_UART_Println("\r\n");
-            } else {
-                Board_UART_Println("CAN Error: ");
-                itoa(ret, str, 2);
-                Board_UART_Println(str);
-                Board_UART_Println("\r\n");
-            }
-        }
+		if(reset_can_peripheral && msTicks > reset_can_peripheral_time) {
+		    Board_UART_Println("Attempting to reset CAN peripheral...");
+		    CAN_ResetPeripheral();
+		    CAN_Init(CCAN_BAUD_RATE);
+		    Board_UART_Println("Reset CAN peripheral. ");
+		    reset_can_peripheral = false;
+		}
+
+
+            // recieve message if there is a message
+		    ret = CAN_Receive(&rx_msg);
+		    if(ret == NO_RX_CAN_MESSAGE) {
+//		        Board_UART_Println("No CAN message received...");
+		    } else if(ret == NO_CAN_ERROR) {
+		        Board_UART_Print("Recieved data ");
+		        Print_Buffer(rx_msg.data, rx_msg.dlc);
+		        Board_UART_Print(" from ");
+		        Board_UART_PrintNum(rx_msg.mode_id,16,true);
+		    } else {
+		        Board_UART_Print("CAN Error: ");
+		        Board_UART_PrintNum(ret, 2,true);
+
+		        Board_UART_Print("Will attempt to reset peripheral in ");
+		        Board_UART_PrintNum(can_error_delay/1000,10,false);
+		        Board_UART_Println(" seconds.");
+		        reset_can_peripheral = true;
+		        reset_can_peripheral_time = msTicks + can_error_delay;
+		    }
 
 		uint8_t count;
 		if ((count = Board_UART_Read(uart_rx_buffer, BUFFER_SIZE)) != 0) {
@@ -204,7 +221,7 @@ int main(void)
 					DI_CTRL = (DI_CTRL & ~DRIVE_STATUS_BITS)|DRIVE_STATUS_OFF;
 					break;
 				default:
-					Board_UART_Println("Invalid Command");
+					//Board_UART_Println("Invalid Command");
 					break;
 			}
 		}
